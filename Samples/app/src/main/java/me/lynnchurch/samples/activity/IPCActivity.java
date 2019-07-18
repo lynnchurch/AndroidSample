@@ -1,9 +1,6 @@
 package me.lynnchurch.samples.activity;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
-import androidx.core.view.ViewCompat;
-import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -15,9 +12,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
-import android.view.ContextMenu;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,9 +20,8 @@ import android.widget.Button;
 
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.logging.Logger;
 
-import me.lynnchurch.samples.BookItemAnimator;
+import me.lynnchurch.samples.anim.BookItemAnimator;
 import me.lynnchurch.samples.R;
 import me.lynnchurch.samples.adapter.BooksAdapter;
 import me.lynnchurch.samples.aidl.Book;
@@ -66,7 +60,7 @@ public class IPCActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ipc);
         getSupportActionBar().setTitle(getResources().getStringArray(R.array.titles)[1]);
-        
+
         bindService(new Intent(this, BooksService.class), serviceConnection, BIND_AUTO_CREATE);
         init();
     }

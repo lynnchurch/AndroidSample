@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.lynnchurch.samples;
+package me.lynnchurch.samples.anim;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
