@@ -7,9 +7,8 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
-import java.util.logging.Logger;
-
 import me.lynnchurch.samples.R;
+import me.lynnchurch.samples.observer.MyLifecycleObserver;
 
 public class AActivity extends BaseActivity {
     private static final String TAG = AActivity.class.getSimpleName();
@@ -20,6 +19,7 @@ public class AActivity extends BaseActivity {
         Log.i(TAG, "onCreate");
         setContentView(R.layout.activity_a);
         getSupportActionBar().setTitle("AActivity");
+        getLifecycle().addObserver(new MyLifecycleObserver(getLifecycle()));
     }
 
     @Override
