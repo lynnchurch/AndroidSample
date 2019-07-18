@@ -66,6 +66,7 @@ public class IPCActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ipc);
         getSupportActionBar().setTitle(getResources().getStringArray(R.array.titles)[1]);
+        
         bindService(new Intent(this, BooksService.class), serviceConnection, BIND_AUTO_CREATE);
         init();
     }
