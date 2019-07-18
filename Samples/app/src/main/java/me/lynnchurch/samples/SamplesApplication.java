@@ -3,45 +3,45 @@ package me.lynnchurch.samples;
 import android.app.Application;
 import android.content.Context;
 import android.content.res.Configuration;
-
-import java.util.logging.Logger;
+import android.util.Log;
 
 public class SamplesApplication extends Application {
-    private final Logger logger = Logger.getLogger(SamplesApplication.class.getSimpleName());
+    private static final String TAG = SamplesApplication.class.getSimpleName();
 
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
-        logger.info("attachBaseContext");
+
+        Log.i(TAG, "attachBaseContext");
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        logger.info("onCreate");
+        Log.i(TAG, "onCreate");
     }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        logger.info("onConfigurationChanged");
+        Log.i(TAG, "onConfigurationChanged");
     }
 
     @Override
     public void onLowMemory() {
         super.onLowMemory();
-        logger.info("onLowMemory");
+        Log.i(TAG, "onLowMemory");
     }
 
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
-        logger.info("onTrimMemory");
+        Log.i(TAG, "onTrimMemory");
     }
 
     @Override
     public void onTerminate() {
         super.onTerminate();
-        logger.info("onTerminate");
+        Log.i(TAG, "onTerminate");
     }
 }

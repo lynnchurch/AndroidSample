@@ -1,23 +1,21 @@
 package me.lynnchurch.samples.activity;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 
-import java.util.logging.Logger;
-
 import me.lynnchurch.samples.R;
 
 public class BActivity extends BaseActivity {
-    private Logger logger = Logger.getLogger(BActivity.class.getSimpleName());
+    private static final String TAG = BActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        logger.info("onCreate");
+        Log.i(TAG, "onCreate");
         setContentView(R.layout.activity_b);
         getSupportActionBar().setTitle("BActivity");
     }
@@ -25,55 +23,55 @@ public class BActivity extends BaseActivity {
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        logger.info("onRestoreInstanceState");
+        Log.i(TAG, "onRestoreInstanceState");
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        logger.info("onNewIntent");
+        Log.i(TAG, "onNewIntent");
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        logger.info("onRestart");
+        Log.i(TAG, "onRestart");
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        logger.info("onStart");
+        Log.i(TAG, "onStart");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        logger.info("onResume");
+        Log.i(TAG, "onResume");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        logger.info("onPause");
+        Log.i(TAG, "onPause");
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        logger.info("onStop");
+        Log.i(TAG, "onStop");
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        logger.info("onSaveInstanceState");
+        Log.i(TAG, "onSaveInstanceState");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        logger.info("onDestroy");
+        Log.i(TAG, "onDestroy");
     }
 
     public void toAActivity(View view) {

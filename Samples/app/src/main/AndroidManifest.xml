@@ -11,7 +11,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="me.lynnchurch.samples.activity.BaseActivity" />
+
+        <activity android:name=".activity.BaseActivity" />
         <activity android:name=".activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -36,6 +37,13 @@
             android:name=".activity.EActivity"
             android:launchMode="singleTask"
             android:taskAffinity="me.lynnchurch.samples.task1" />
+        <activity android:name=".activity.IPCActivity"/>
+
+        <service
+            android:name=".service.BooksService"
+            android:enabled="true"
+            android:exported="true"
+            android:process="me.lynnchurch.samples.service" />
     </application>
 
 </manifest>
