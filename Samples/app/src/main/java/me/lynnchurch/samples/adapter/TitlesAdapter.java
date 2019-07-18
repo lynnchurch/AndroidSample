@@ -8,8 +8,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
-
 import me.lynnchurch.samples.R;
 
 public class TitlesAdapter extends RecyclerView.Adapter<TitlesAdapter.VH> {
