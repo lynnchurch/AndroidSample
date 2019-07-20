@@ -3,23 +3,23 @@ package me.lynnchurch.samples.aidl;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class Book implements Parcelable {
+public class Book_AIDL implements Parcelable {
     private long id;
     private String name;
 
-    public Book(long id, String name) {
+    public Book_AIDL(long id, String name) {
         this.id = id;
         this.name = name;
     }
 
-    protected Book(Parcel in) {
+    protected Book_AIDL(Parcel in) {
         id = in.readLong();
         name = in.readString();
     }
 
     @Override
     public String toString() {
-        return "Book{" +
+        return "Book_AIDL{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
                 '}';
@@ -36,15 +36,15 @@ public class Book implements Parcelable {
         return 0;
     }
 
-    public static final Creator<Book> CREATOR = new Creator<Book>() {
+    public static final Creator<Book_AIDL> CREATOR = new Creator<Book_AIDL>() {
         @Override
-        public Book createFromParcel(Parcel in) {
-            return new Book(in);
+        public Book_AIDL createFromParcel(Parcel in) {
+            return new Book_AIDL(in);
         }
 
         @Override
-        public Book[] newArray(int size) {
-            return new Book[size];
+        public Book_AIDL[] newArray(int size) {
+            return new Book_AIDL[size];
         }
     };
 

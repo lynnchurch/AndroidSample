@@ -21,10 +21,10 @@ import android.widget.Button;
 import java.util.ArrayList;
 import java.util.Random;
 
+import me.lynnchurch.samples.aidl.Book_AIDL;
 import me.lynnchurch.samples.anim.BookItemAnimator;
 import me.lynnchurch.samples.R;
 import me.lynnchurch.samples.adapter.BooksAdapter;
-import me.lynnchurch.samples.aidl.Book;
 import me.lynnchurch.samples.aidl.IBookManager;
 import me.lynnchurch.samples.service.BooksService;
 
@@ -33,7 +33,7 @@ public class IPCActivity extends BaseActivity {
     private RecyclerView rvBooks;
     private Button btnAddBook;
     private BooksAdapter mBooksAdapter;
-    private ArrayList<Book> mBooks = new ArrayList<>();
+    private ArrayList<Book_AIDL> mBookAIDLS = new ArrayList<>();
     private IBookManager mBookManager;
     private Random mRandom = new Random();
 
@@ -42,7 +42,7 @@ public class IPCActivity extends BaseActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             mBookManager = IBookManager.Stub.asInterface(service);
             try {
-                mBooks.addAll(mBookManager.getBookList());
+                mBookAIDLS.addAll(mBookManager.getBookList());
                 mBooksAdapter.notifyDataSetChanged();
             } catch (RemoteException e) {
                 Log.e(TAG, e.getMessage(), e);
@@ -69,7 +69,7 @@ public class IPCActivity extends BaseActivity {
         rvBooks = findViewById(R.id.rvBooks);
         btnAddBook = findViewById(R.id.btnAddBook);
 
-        mBooksAdapter = new BooksAdapter(mBooks);
+        mBooksAdapter = new BooksAdapter(mBookAIDLS);
         mBooksAdapter.setOnItemClickListener(new BooksAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View v, int position) {
@@ -93,11 +93,11 @@ public class IPCActivity extends BaseActivity {
             public void onClick(View v) {
                 long id = mRandom.nextLong();
                 try {
-                    Book book = new Book(id, "书籍" + id);
-                    mBooks.add(0, book);
+                    Book_AIDL bookAIDL = new Book_AIDL(id, "书籍" + id);
+                    mBookAIDLS.add(0, bookAIDL);
                     mBooksAdapter.notifyItemInserted(0);
-                    mBooksAdapter.notifyItemRangeChanged(0, mBooks.size());
-                    mBookManager.addBook(book);
+                    mBooksAdapter.notifyItemRangeChanged(0, mBookAIDLS.size());
+                    mBookManager.addBook(bookAIDL);
                 } catch (RemoteException e) {
                     Log.e(TAG, e.getMessage(), e);
                 }
@@ -109,23 +109,21 @@ public class IPCActivity extends BaseActivity {
         PopupMenu popupMenu = new PopupMenu(this, ancherView, Gravity.RIGHT);
         MenuInflater inflater = popupMenu.getMenuInflater();
         inflater.inflate(R.menu.manage_book, popupMenu.getMenu());
-        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.deleteBook:
-                        mBooks.remove(position);
-                        mBooksAdapter.notifyItemRemoved(position);
-                        mBooksAdapter.notifyItemRangeChanged(position, mBooks.size());
-                        try {
-                            mBookManager.delBook(position);
-                        } catch (RemoteException e) {
-                            Log.e(TAG, e.getMessage(), e);
-                        }
-                        break;
-                }
-                return true;
+        popupMenu.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case R.id.deleteBook:
+                    long id = mBookAIDLS.get(position).getId();
+                    mBookAIDLS.remove(position);
+                    mBooksAdapter.notifyItemRemoved(position);
+                    mBooksAdapter.notifyItemRangeChanged(position, mBookAIDLS.size());
+                    try {
+                        mBookManager.delBook(id);
+                    } catch (RemoteException e) {
+                        Log.e(TAG, e.getMessage(), e);
+                    }
+                    break;
             }
+            return true;
         });
         popupMenu.show();
     }

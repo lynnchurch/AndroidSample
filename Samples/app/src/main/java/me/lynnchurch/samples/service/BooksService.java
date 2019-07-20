@@ -3,18 +3,26 @@ package me.lynnchurch.samples.service;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import me.lynnchurch.samples.aidl.Book;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import me.lynnchurch.samples.aidl.Book_AIDL;
 import me.lynnchurch.samples.aidl.IBookManager;
+import me.lynnchurch.samples.db.LynnDatabase;
+import me.lynnchurch.samples.db.bean.Book;
 
 public class BooksService extends Service {
     private static final String TAG = BooksService.class.getSimpleName();
-    private ArrayList<Book> mBooks = new ArrayList<>();
 
     public BooksService() {
     }
@@ -22,9 +30,6 @@ public class BooksService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        mBooks.add(new Book(1, "天龙八部"));
-        mBooks.add(new Book(2, "倚天屠龙记"));
-        mBooks.add(new Book(3, "书剑恩仇录"));
     }
 
     @Override
@@ -35,27 +40,36 @@ public class BooksService extends Service {
     private IBookManager.Stub bookManager = new IBookManager.Stub() {
 
         @Override
-        public List<Book> getBookList() {
-            Log.i(TAG, "getBookList size:" + mBooks.size());
-            synchronized (mBooks) {
-                return mBooks;
+        public List<Book_AIDL> getBookList() {
+            List<Book> books = LynnDatabase.getInstance(getApplicationContext()).getBookDao().getBooks();
+            List<Book_AIDL> book_aidls = new ArrayList<>();
+            for (Book book : books) {
+                book_aidls.add(convertToBook_AIDL(book));
             }
+            Log.i(TAG, "getBookList size:" + book_aidls.size());
+            return book_aidls;
         }
 
         @Override
-        public void addBook(Book book) {
-            Log.i(TAG, "addBook:" + book);
-            synchronized (mBooks) {
-                mBooks.add(0, book);
-            }
+        public void addBook(Book_AIDL bookAIDL) {
+            Log.i(TAG, "addBook:" + bookAIDL);
+            LynnDatabase.getInstance(getApplicationContext()).getBookDao().addBook(convertToBook(bookAIDL));
         }
 
         @Override
-        public void delBook(int position) {
-            Log.i(TAG, "delBook:" + position);
-            synchronized (mBooks) {
-                mBooks.remove(position);
-            }
+        public void delBook(long id) {
+            LynnDatabase.getInstance(getApplicationContext()).getBookDao().delBook(new Book.BookId(id));
+            Log.i(TAG, "delBook:" + id);
         }
     };
+
+    public Book_AIDL convertToBook_AIDL(Book book) {
+        Book_AIDL book_aidl = new Book_AIDL(book.getId(), book.getName());
+        return book_aidl;
+    }
+
+    public Book convertToBook(Book_AIDL book_aidl) {
+        Book book = new Book(book_aidl.getId(), book_aidl.getName());
+        return book;
+    }
 }

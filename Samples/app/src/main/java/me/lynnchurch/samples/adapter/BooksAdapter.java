@@ -11,14 +11,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 import me.lynnchurch.samples.R;
-import me.lynnchurch.samples.activity.BaseActivity;
-import me.lynnchurch.samples.aidl.Book;
+import me.lynnchurch.samples.aidl.Book_AIDL;
 
 public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.VH> {
-    private List<Book> mData;
+    private List<Book_AIDL> mData;
     private OnItemClickListener mOnItemClickListener;
 
-    public BooksAdapter(List<Book> data) {
+    public BooksAdapter(List<Book_AIDL> data) {
         mData = data;
     }
 
