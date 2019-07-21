@@ -37,24 +37,6 @@ public class IPCActivity extends BaseActivity {
     private IBookManager mBookManager;
     private Random mRandom = new Random();
 
-    private ServiceConnection serviceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            mBookManager = IBookManager.Stub.asInterface(service);
-            try {
-                mBookAIDLS.addAll(mBookManager.getBookList());
-                mBooksAdapter.notifyDataSetChanged();
-            } catch (RemoteException e) {
-                Log.e(TAG, e.getMessage(), e);
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-
-        }
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,8 +67,8 @@ public class IPCActivity extends BaseActivity {
         rvBooks.setAdapter(mBooksAdapter);
         rvBooks.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         BookItemAnimator bookItemAnimator = new BookItemAnimator();
-        bookItemAnimator.setAddDuration(600);
-        bookItemAnimator.setRemoveDuration(600);
+        bookItemAnimator.setAddDuration(300);
+        bookItemAnimator.setRemoveDuration(300);
         rvBooks.setItemAnimator(bookItemAnimator);
         btnAddBook.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -128,4 +110,34 @@ public class IPCActivity extends BaseActivity {
         popupMenu.show();
     }
 
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mBookManager = IBookManager.Stub.asInterface(service);
+            try {
+                service.linkToDeath(mDeathRecipient, 0);
+                mBookAIDLS.addAll(mBookManager.getBookList());
+                mBooksAdapter.notifyDataSetChanged();
+            } catch (RemoteException e) {
+                Log.e(TAG, e.getMessage(), e);
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
+
+    private IBinder.DeathRecipient mDeathRecipient = new IBinder.DeathRecipient() {
+        @Override
+        public void binderDied() {
+            if (null == mBookManager) {
+                return;
+            }
+            mBookManager.asBinder().unlinkToDeath(mDeathRecipient, 0);
+            mBookManager = null;
+            bindService(new Intent(IPCActivity.this, BooksService.class), serviceConnection, BIND_AUTO_CREATE);
+        }
+    };
 }
