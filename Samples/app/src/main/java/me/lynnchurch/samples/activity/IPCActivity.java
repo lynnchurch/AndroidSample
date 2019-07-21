@@ -13,7 +13,9 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
@@ -69,21 +71,39 @@ public class IPCActivity extends BaseActivity {
         bookItemAnimator.setAddDuration(300);
         bookItemAnimator.setRemoveDuration(300);
         rvBooks.setItemAnimator(bookItemAnimator);
-        btnAddBook.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                long id = mRandom.nextLong();
-                try {
-                    Book_AIDL bookAIDL = new Book_AIDL(id, "书籍" + id);
-                    mBookAIDLS.add(0, bookAIDL);
-                    mBooksAdapter.notifyItemInserted(0);
-                    mBooksAdapter.notifyItemRangeChanged(0, mBookAIDLS.size());
-                    mBookManager.addBook(bookAIDL);
-                } catch (RemoteException e) {
-                    Log.e(TAG, e.getMessage(), e);
-                }
+        btnAddBook.setOnClickListener(v -> {
+            if (null == mBookManager) {
+                return;
+            }
+            long id = mRandom.nextLong();
+            try {
+                Book_AIDL bookAIDL = new Book_AIDL(id, "书籍" + id);
+                mBookAIDLS.add(0, bookAIDL);
+                mBooksAdapter.notifyItemInserted(0);
+                mBooksAdapter.notifyItemRangeChanged(0, mBookAIDLS.size());
+                mBookManager.addBook(bookAIDL);
+            } catch (RemoteException e) {
+                Log.e(TAG, e.getMessage(), e);
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.messenger, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.messenger:
+                startActivity(new Intent(IPCActivity.this, MessengerActivity.class));
+                break;
+            default:
+                return onContextItemSelected(item);
+        }
+        return true;
     }
 
     private void showPopupMenu(View ancherView, final int position) {
@@ -93,6 +113,9 @@ public class IPCActivity extends BaseActivity {
         popupMenu.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case R.id.deleteBook:
+                    if (null == mBookManager) {
+                        return true;
+                    }
                     long id = mBookAIDLS.get(position).getId();
                     mBookAIDLS.remove(position);
                     mBooksAdapter.notifyItemRemoved(position);

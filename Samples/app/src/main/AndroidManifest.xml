@@ -37,13 +37,24 @@
             android:name=".activity.EActivity"
             android:launchMode="singleTask"
             android:taskAffinity="me.lynnchurch.samples.task1" />
-        <activity android:name=".activity.IPCActivity"/>
+        <activity android:name=".activity.IPCActivity" />
+
+        <activity
+            android:name=".activity.MessengerActivity"
+            android:launchMode="singleTop" />
 
         <service
             android:name=".service.BooksService"
             android:enabled="true"
             android:exported="true"
             android:process="me.lynnchurch.samples.service" />
+
+        <service
+            android:name=".service.MessengerService"
+            android:enabled="true"
+            android:exported="true"
+            android:process=":messenger"/>
+
     </application>
 
 </manifest>
