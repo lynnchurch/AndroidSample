@@ -1,5 +1,5 @@
 # AndroidSample
-Android的一些示例，方便学习研究，其中Samples是主项目，Target是辅助项目（跨进程操作需要）
+Android的一些示例，方便学习研究，其中Samples是主项目，Target是辅助项目（跨应用操作需要）
 
 ## 相关内容
 
