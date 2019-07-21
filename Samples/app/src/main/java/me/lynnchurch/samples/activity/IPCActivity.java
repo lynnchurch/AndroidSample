@@ -14,7 +14,6 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
@@ -43,7 +42,7 @@ public class IPCActivity extends BaseActivity {
         setContentView(R.layout.activity_ipc);
         getSupportActionBar().setTitle(getResources().getStringArray(R.array.titles)[1]);
 
-        bindService(new Intent(this, BooksService.class), serviceConnection, BIND_AUTO_CREATE);
+        bindService(new Intent(this, BooksService.class), mServiceConnection, BIND_AUTO_CREATE);
         init();
     }
 
@@ -110,7 +109,7 @@ public class IPCActivity extends BaseActivity {
         popupMenu.show();
     }
 
-    private ServiceConnection serviceConnection = new ServiceConnection() {
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mBookManager = IBookManager.Stub.asInterface(service);
@@ -137,7 +136,13 @@ public class IPCActivity extends BaseActivity {
             }
             mBookManager.asBinder().unlinkToDeath(mDeathRecipient, 0);
             mBookManager = null;
-            bindService(new Intent(IPCActivity.this, BooksService.class), serviceConnection, BIND_AUTO_CREATE);
+            bindService(new Intent(IPCActivity.this, BooksService.class), mServiceConnection, BIND_AUTO_CREATE);
         }
     };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(mServiceConnection);
+    }
 }
