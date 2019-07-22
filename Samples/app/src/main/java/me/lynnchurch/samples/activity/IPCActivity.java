@@ -22,6 +22,7 @@ import android.view.View;
 import android.widget.Button;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import me.lynnchurch.samples.aidl.Book_AIDL;
@@ -80,16 +81,20 @@ public class IPCActivity extends BaseActivity {
                 return;
             }
             long id = mRandom.nextLong();
-            try {
-                Book_AIDL bookAIDL = new Book_AIDL(id, "书籍" + id);
-                mBookAIDLS.add(0, bookAIDL);
-                mBooksAdapter.notifyItemInserted(0);
-                mBooksAdapter.notifyItemRangeChanged(0, mBookAIDLS.size());
-                rvBooks.scrollToPosition(0);
-                mBookManager.addBook(bookAIDL);
-            } catch (RemoteException e) {
-                Log.e(TAG, e.getMessage(), e);
-            }
+            Book_AIDL bookAIDL = new Book_AIDL(id, "书籍" + id);
+            mBookAIDLS.add(0, bookAIDL);
+            mBooksAdapter.notifyItemInserted(0);
+            mBooksAdapter.notifyItemRangeChanged(0, mBookAIDLS.size());
+            rvBooks.scrollToPosition(0);
+
+            new Thread(() -> {
+                try {
+                    mBookManager.addBook(bookAIDL);
+                } catch (RemoteException e) {
+                    Log.i(TAG, e.getMessage(), e);
+                }
+            }).start();
+
         });
     }
 
@@ -125,11 +130,14 @@ public class IPCActivity extends BaseActivity {
                     mBookAIDLS.remove(position);
                     mBooksAdapter.notifyItemRemoved(position);
                     mBooksAdapter.notifyItemRangeChanged(position, mBookAIDLS.size());
-                    try {
-                        mBookManager.delBook(id);
-                    } catch (RemoteException e) {
-                        Log.e(TAG, e.getMessage(), e);
-                    }
+
+                    new Thread(() -> {
+                        try {
+                            mBookManager.delBook(id);
+                        } catch (RemoteException e) {
+                            Log.i(TAG, e.getMessage(), e);
+                        }
+                    }).start();
                     break;
             }
             return true;
@@ -141,14 +149,18 @@ public class IPCActivity extends BaseActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mBookManager = IBookManager.Stub.asInterface(service);
-            try {
-                service.linkToDeath(mDeathRecipient, 0);
-                mBookManager.addIOnBookArrivedListener(mIOnBookArrivedListener);
-                mBookAIDLS.addAll(mBookManager.getBookList());
-                mBooksAdapter.notifyDataSetChanged();
-            } catch (RemoteException e) {
-                Log.e(TAG, e.getMessage(), e);
-            }
+            new Thread(() -> {
+                try {
+                    service.linkToDeath(mDeathRecipient, 0);
+                    mBookManager.addIOnBookArrivedListener(mIOnBookArrivedListener);
+                    List<Book_AIDL> books = mBookManager.getBookList();
+                    Message message = mServerMsgHandler.obtainMessage(Constants.MSG_GET_BOOK_LIST, books);
+                    message.obj = books;
+                    mServerMsgHandler.sendMessage(message);
+                } catch (RemoteException e) {
+                    Log.e(TAG, e.getMessage(), e);
+                }
+            }).start();
         }
 
         @Override
@@ -189,6 +201,11 @@ public class IPCActivity extends BaseActivity {
                     mBooksAdapter.notifyItemInserted(0);
                     mBooksAdapter.notifyItemRangeChanged(0, mBookAIDLS.size());
                     rvBooks.scrollToPosition(0);
+                    break;
+                case Constants.MSG_GET_BOOK_LIST:
+                    List<Book_AIDL> books = (List<Book_AIDL>) msg.obj;
+                    mBookAIDLS.addAll(books);
+                    mBooksAdapter.notifyDataSetChanged();
                     break;
                 default:
                     super.handleMessage(msg);
