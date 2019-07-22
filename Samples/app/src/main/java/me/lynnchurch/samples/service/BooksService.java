@@ -50,7 +50,7 @@ public class BooksService extends Service {
             Book book = new Book(bookId, "新书 " + bookId);
             LynnDatabase.getInstance(getApplicationContext()).getBookDao().addBook(book);
             return convertToBook_AIDL(book);
-        }).subscribeOn(Schedulers.io()).observeOn(Schedulers.newThread()).subscribe(new Observer<Book_AIDL>() {
+        }).subscribe(new Observer<Book_AIDL>() {
             @Override
             public void onSubscribe(Disposable d) {
                 mDisposable = d;
