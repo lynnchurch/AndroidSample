@@ -3,6 +3,7 @@ package me.lynnchurch.samples.service;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -30,7 +31,7 @@ import me.lynnchurch.samples.db.bean.Book;
 public class BooksService extends Service {
     private static final String TAG = BooksService.class.getSimpleName();
     private AtomicBoolean mIsServiceDestroyed = new AtomicBoolean(false);
-    private CopyOnWriteArrayList<IOnBookArrivedListener> mIOnBookArrivedListeners = new CopyOnWriteArrayList<>();
+    private RemoteCallbackList<IOnBookArrivedListener> mIOnBookArrivedListeners = new RemoteCallbackList<>();
     private Disposable mDisposable;
 
     public BooksService() {
@@ -57,13 +58,18 @@ public class BooksService extends Service {
 
             @Override
             public void onNext(Book_AIDL book_aidl) {
-                for (IOnBookArrivedListener iOnBookArrivedListener : mIOnBookArrivedListeners) {
-                    try {
-                        iOnBookArrivedListener.onBookArrived(book_aidl);
-                    } catch (RemoteException e) {
-                        Log.e(TAG, e.getMessage(), e);
+                final int listenerCount = mIOnBookArrivedListeners.beginBroadcast();
+                for (int i = 0; i < listenerCount; i++) {
+                    IOnBookArrivedListener iOnBookArrivedListener = mIOnBookArrivedListeners.getBroadcastItem(i);
+                    if (null != iOnBookArrivedListener) {
+                        try {
+                            iOnBookArrivedListener.onBookArrived(book_aidl);
+                        } catch (RemoteException e) {
+                            Log.e(TAG, e.getMessage(), e);
+                        }
                     }
                 }
+                mIOnBookArrivedListeners.finishBroadcast();
             }
 
             @Override
@@ -115,13 +121,13 @@ public class BooksService extends Service {
         }
 
         @Override
-        public void addIOnBookArrivedListener(IOnBookArrivedListener iOnBookArrivedListener) throws RemoteException {
-            mIOnBookArrivedListeners.add(iOnBookArrivedListener);
+        public void addIOnBookArrivedListener(IOnBookArrivedListener iOnBookArrivedListener) {
+            mIOnBookArrivedListeners.register(iOnBookArrivedListener);
         }
 
         @Override
-        public void removeIOnBookArrivedListener(IOnBookArrivedListener iOnBookArrivedListener) throws RemoteException {
-            mIOnBookArrivedListeners.remove(iOnBookArrivedListener);
+        public void removeIOnBookArrivedListener(IOnBookArrivedListener iOnBookArrivedListener) {
+            mIOnBookArrivedListeners.unregister(iOnBookArrivedListener);
         }
     };
 
