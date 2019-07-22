@@ -9,7 +9,9 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.Gravity;
@@ -23,10 +25,12 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import me.lynnchurch.samples.aidl.Book_AIDL;
+import me.lynnchurch.samples.aidl.IOnBookArrivedListener;
 import me.lynnchurch.samples.anim.BookItemAnimator;
 import me.lynnchurch.samples.R;
 import me.lynnchurch.samples.adapter.BooksAdapter;
 import me.lynnchurch.samples.aidl.IBookManager;
+import me.lynnchurch.samples.config.Constants;
 import me.lynnchurch.samples.service.BooksService;
 
 public class IPCActivity extends BaseActivity {
@@ -81,6 +85,7 @@ public class IPCActivity extends BaseActivity {
                 mBookAIDLS.add(0, bookAIDL);
                 mBooksAdapter.notifyItemInserted(0);
                 mBooksAdapter.notifyItemRangeChanged(0, mBookAIDLS.size());
+                rvBooks.scrollToPosition(0);
                 mBookManager.addBook(bookAIDL);
             } catch (RemoteException e) {
                 Log.e(TAG, e.getMessage(), e);
@@ -138,6 +143,7 @@ public class IPCActivity extends BaseActivity {
             mBookManager = IBookManager.Stub.asInterface(service);
             try {
                 service.linkToDeath(mDeathRecipient, 0);
+                mBookManager.addIOnBookArrivedListener(mIOnBookArrivedListener);
                 mBookAIDLS.addAll(mBookManager.getBookList());
                 mBooksAdapter.notifyDataSetChanged();
             } catch (RemoteException e) {
@@ -163,9 +169,43 @@ public class IPCActivity extends BaseActivity {
         }
     };
 
+    private IOnBookArrivedListener mIOnBookArrivedListener = new IOnBookArrivedListener.Stub() {
+        @Override
+        public void onBookArrived(Book_AIDL book_aidl) throws RemoteException {
+            Message message = mServerMsgHandler.obtainMessage(Constants.MSG_NEW_BOOK_ARRIVED, book_aidl);
+            message.obj = book_aidl;
+            mServerMsgHandler.sendMessage(message);
+        }
+    };
+
+    private Handler mServerMsgHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case Constants
+                        .MSG_NEW_BOOK_ARRIVED:
+                    Book_AIDL book_aidl = (Book_AIDL) msg.obj;
+                    mBookAIDLS.add(0, book_aidl);
+                    mBooksAdapter.notifyItemInserted(0);
+                    mBooksAdapter.notifyItemRangeChanged(0, mBookAIDLS.size());
+                    rvBooks.scrollToPosition(0);
+                    break;
+                default:
+                    super.handleMessage(msg);
+            }
+        }
+    };
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         unbindService(mServiceConnection);
+        if (null != mBookManager) {
+            try {
+                mBookManager.removeIOnBookArrivedListener(mIOnBookArrivedListener);
+            } catch (RemoteException e) {
+                Log.e(TAG, e.getMessage(), e);
+            }
+        }
     }
 }
