@@ -2,21 +2,37 @@ package me.lynnchurch.assist.activity;
 
 import androidx.annotation.NonNull;
 
+import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import com.tbruyelle.rxpermissions2.RxPermissions;
+
 import me.lynnchurch.assist.R;
 
 public class MainActivity extends BaseActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
+    private final RxPermissions rxPermissions = new RxPermissions(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
         setContentView(R.layout.activity_main);
+        requestPermissions();
+    }
+
+    private void requestPermissions(){
+        rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .subscribe(granted -> {
+                    if(granted) {
+                        Log.i(TAG,"WRITE_EXTERNAL_STORAGE is granted");
+                    } else {
+                        Log.i(TAG,"WRITE_EXTERNAL_STORAGE is not granted");
+                    }
+                });
     }
 
     @Override

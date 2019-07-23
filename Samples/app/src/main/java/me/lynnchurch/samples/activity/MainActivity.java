@@ -1,5 +1,6 @@
 package me.lynnchurch.samples.activity;
 
+import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,6 +11,8 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.tbruyelle.rxpermissions2.RxPermissions;
+
 import me.lynnchurch.samples.R;
 import me.lynnchurch.samples.adapter.TitlesAdapter;
 
@@ -17,6 +20,7 @@ public class MainActivity extends BaseActivity {
     private static final int POSITION_LIFECYCLE_AND_LAUNCH_MODE = 0;
     private static final int POSITION_IPC = 1;
     private static final String TAG = MainActivity.class.getSimpleName();
+    private final RxPermissions rxPermissions = new RxPermissions(this);
     private RecyclerView rvTitles;
     private TitlesAdapter titlesAdapter;
 
@@ -24,8 +28,19 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        requestPermissions();
         init();
+    }
 
+    private void requestPermissions(){
+        rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .subscribe(granted -> {
+                    if(granted) {
+                        Log.i(TAG,"WRITE_EXTERNAL_STORAGE is granted");
+                    } else {
+                        Log.i(TAG,"WRITE_EXTERNAL_STORAGE is not granted");
+                    }
+                });
     }
 
     private void init() {
