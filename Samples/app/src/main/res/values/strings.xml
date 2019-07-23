@@ -5,4 +5,6 @@
         <item>IPC机制</item>
     </string-array>
     <string name="app_not_installed">应用未安装</string>
+    <string name="books_service_permission_description">manage books by BooksService</string>
+    <string name="messenger_service_permission_description">send message by MessengerService</string>
 </resources>

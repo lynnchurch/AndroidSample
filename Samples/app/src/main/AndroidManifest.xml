@@ -2,6 +2,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="me.lynnchurch.samples">
 
+    <permission
+        android:name="lynnchurch.permission.MANAGE_BOOKS"
+        android:description="@string/books_service_permission_description"
+        android:label="manage books"
+        android:protectionLevel="normal" />
+
+    <permission
+        android:name="lynnchurch.permission.MESSENGER"
+        android:description="@string/messenger_service_permission_description"
+        android:label="send message"
+        android:protectionLevel="normal" />
+
     <application
         android:name=".SamplesApplication"
         android:allowBackup="false"
@@ -57,13 +69,15 @@
             android:name=".service.BooksService"
             android:enabled="true"
             android:exported="true"
-            android:process="me.lynnchurch.samples.service" />
+            android:process="me.lynnchurch.samples.service"
+            android:permission="lynnchurch.permission.MANAGE_BOOKS"/>
 
         <service
             android:name=".service.MessengerService"
             android:enabled="true"
             android:exported="true"
-            android:process=":messenger" />
+            android:process=":messenger"
+            android:permission="lynnchurch.permission.MESSENGER"/>
 
     </application>
 

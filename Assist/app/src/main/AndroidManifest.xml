@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="me.lynnchurch.assist">
 
+    <uses-permission android:name="lynnchurch.permission.MANAGE_BOOKS"/>
+    <uses-permission android:name="lynnchurch.permission.MESSENGER"/>
+    
     <application
         android:name="me.lynnchurch.assist.TargetApplication"
         android:allowBackup="false"
