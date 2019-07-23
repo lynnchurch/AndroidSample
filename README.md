@@ -7,4 +7,4 @@ Android的一些示例，方便学习研究，其中Samples是主项目，Assist
 2. IPC机制
 3. Lifecycle
 4. Room
-5. Rxjava、RxAndroid
+5. Rxjava、RxAndroid、RxPermissions、RxBinding
