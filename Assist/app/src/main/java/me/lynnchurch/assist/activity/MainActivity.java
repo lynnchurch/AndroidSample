@@ -88,4 +88,8 @@ public class MainActivity extends BaseActivity {
     public void toDActivity(View view) {
         startActivity(new Intent(this, DActivity.class));
     }
+
+    public void toIPCActivity(View view) {
+        startActivity(new Intent(this, IPCActivity.class));
+    }
 }

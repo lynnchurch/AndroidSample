@@ -11,7 +11,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity android:name="me.lynnchurch.assist.activity.MainActivity">
+        <activity
+            android:name="me.lynnchurch.assist.activity.MainActivity"
+            android:configChanges="orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -19,7 +21,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="me.lynnchurch.assist.activity.AActivity">
+        <activity
+            android:name="me.lynnchurch.assist.activity.AActivity"
+            android:configChanges="orientation|screenSize">
             <intent-filter>
                 <action android:name="lynnchurch.intent.action.ACTION_OK" />
 
@@ -27,7 +31,9 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name="me.lynnchurch.assist.activity.BActivity">
+        <activity
+            android:name="me.lynnchurch.assist.activity.BActivity"
+            android:configChanges="orientation|screenSize">
             <intent-filter>
                 <action android:name="lynnchurch.intent.action.ACTION_OK" />
                 <action android:name="lynnchurch.intent.action.FIRST" />
@@ -38,8 +44,11 @@
         <activity
             android:name="me.lynnchurch.assist.activity.CActivity"
             android:allowTaskReparenting="true"
+            android:configChanges="orientation|screenSize"
             android:exported="true" />
-        <activity android:name="me.lynnchurch.assist.activity.DActivity">
+        <activity
+            android:name="me.lynnchurch.assist.activity.DActivity"
+            android:configChanges="orientation|screenSize">
             <intent-filter>
                 <action android:name="lynnchurch.intent.action.FIRST" />
 
@@ -50,6 +59,16 @@
 
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".activity.IPCActivity"
+            android:configChanges="orientation|screenSize"
+            android:launchMode="singleTop" />
+
+        <activity
+            android:name=".activity.MessengerActivity"
+            android:configChanges="orientation|screenSize"
+            android:launchMode="singleTop" />
     </application>
 
 </manifest>
