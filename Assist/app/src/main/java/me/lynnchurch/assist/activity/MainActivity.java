@@ -1,32 +1,22 @@
-package me.lynnchurch.target.activity;
+package me.lynnchurch.assist.activity;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
-import java.util.logging.Logger;
+import me.lynnchurch.assist.R;
 
-import me.lynnchurch.target.R;
-
-public class DActivity extends BaseActivity {
-    private static final String TAG = DActivity.class.getSimpleName();
+public class MainActivity extends BaseActivity {
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
-        setContentView(R.layout.activity_d);
-        getSupportActionBar().setTitle("Target DActivity");
-        Intent intent = getIntent();
-        Uri uri = intent.getData();
-        if (null != uri) {
-            String type = intent.getType();
-            Log.i(TAG, "uri:" + uri + " type:" + type);
-        }
+        setContentView(R.layout.activity_main);
     }
 
     @Override
@@ -81,5 +71,21 @@ public class DActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         Log.i(TAG, "onDestroy");
+    }
+
+    public void toAActivity(View view) {
+        startActivity(new Intent(this, AActivity.class));
+    }
+
+    public void toBActivity(View view) {
+        startActivity(new Intent(this, BActivity.class));
+    }
+
+    public void toCActivity(View view) {
+        startActivity(new Intent(this, CActivity.class));
+    }
+
+    public void toDActivity(View view) {
+        startActivity(new Intent(this, DActivity.class));
     }
 }

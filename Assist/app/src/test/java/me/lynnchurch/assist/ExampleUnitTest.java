@@ -1,4 +1,4 @@
-package me.lynnchurch.target;
+package me.lynnchurch.assist;
 
 import org.junit.Test;
 

@@ -99,29 +99,29 @@ public class LifecycleAndLaunchModeActivity extends BaseActivity {
         startActivity(new Intent(this, EActivity.class));
     }
 
-    public void toTargetAActivityExplicit(View view) {
-        if (!Utils.isAppInstalled(this, "me.lynnchurch.target")) {
+    public void toassistAActivityExplicit(View view) {
+        if (!Utils.isAppInstalled(this, "me.lynnchurch.assist")) {
             toast(R.string.app_not_installed, Toast.LENGTH_SHORT);
             return;
         }
         Intent intent = new Intent();
         intent.putExtra("msg", "Hello, msg is from Samples.");
-        intent.setClassName("me.lynnchurch.target", "me.lynnchurch.target.activity.AActivity");
+        intent.setClassName("me.lynnchurch.assist", "me.lynnchurch.assist.activity.AActivity");
         startActivityForResult(intent, REQUEST_CODE_AACTIVITY);
     }
 
-    public void toTargetAActivityExplicitWithNewTask(View view) {
-        if (!Utils.isAppInstalled(this, "me.lynnchurch.target")) {
+    public void toassistAActivityExplicitWithNewTask(View view) {
+        if (!Utils.isAppInstalled(this, "me.lynnchurch.assist")) {
             toast(R.string.app_not_installed, Toast.LENGTH_SHORT);
             return;
         }
         Intent intent = new Intent();
-        intent.setClassName("me.lynnchurch.target", "me.lynnchurch.target.activity.AActivity");
+        intent.setClassName("me.lynnchurch.assist", "me.lynnchurch.assist.activity.AActivity");
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
     }
 
-    public void toTargetActivityImplicit(View view) {
+    public void toassistActivityImplicit(View view) {
         Intent intent = new Intent();
         intent.setAction("lynnchurch.intent.action.FIRST");
         intent.addCategory("lynnchurch.intent.category.OK");
@@ -134,13 +134,13 @@ public class LifecycleAndLaunchModeActivity extends BaseActivity {
         startActivity(intent);
     }
 
-    public void toTargetCActivityExplicit(View view) {
-        if (!Utils.isAppInstalled(this, "me.lynnchurch.target")) {
+    public void toassistCActivityExplicit(View view) {
+        if (!Utils.isAppInstalled(this, "me.lynnchurch.assist")) {
             toast(R.string.app_not_installed, Toast.LENGTH_SHORT);
             return;
         }
         Intent intent = new Intent();
-        intent.setClassName("me.lynnchurch.target", "me.lynnchurch.target.activity.CActivity");
+        intent.setClassName("me.lynnchurch.assist", "me.lynnchurch.assist.activity.CActivity");
         startActivity(intent);
     }
 

@@ -1,11 +1,9 @@
-package me.lynnchurch.target;
+package me.lynnchurch.assist;
 
 import android.app.Application;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.util.Log;
-
-import java.util.logging.Logger;
 
 public class TargetApplication extends Application {
     private static final String TAG = TargetApplication.class.getSimpleName();

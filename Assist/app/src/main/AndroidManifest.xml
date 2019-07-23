@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="me.lynnchurch.target">
+    package="me.lynnchurch.assist">
 
     <application
-        android:name=".TargetApplication"
+        android:name="me.lynnchurch.assist.TargetApplication"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -11,7 +11,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity android:name=".activity.MainActivity">
+        <activity android:name="me.lynnchurch.assist.activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -19,7 +19,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.AActivity">
+        <activity android:name="me.lynnchurch.assist.activity.AActivity">
             <intent-filter>
                 <action android:name="lynnchurch.intent.action.ACTION_OK" />
 
@@ -27,7 +27,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.BActivity">
+        <activity android:name="me.lynnchurch.assist.activity.BActivity">
             <intent-filter>
                 <action android:name="lynnchurch.intent.action.ACTION_OK" />
                 <action android:name="lynnchurch.intent.action.FIRST" />
@@ -36,10 +36,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activity.CActivity"
+            android:name="me.lynnchurch.assist.activity.CActivity"
             android:allowTaskReparenting="true"
             android:exported="true" />
-        <activity android:name=".activity.DActivity">
+        <activity android:name="me.lynnchurch.assist.activity.DActivity">
             <intent-filter>
                 <action android:name="lynnchurch.intent.action.FIRST" />
 

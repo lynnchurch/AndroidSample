@@ -1,28 +1,24 @@
-package me.lynnchurch.target.activity;
+package me.lynnchurch.assist.activity;
 
 import androidx.annotation.NonNull;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Toast;
 
-import java.util.logging.Logger;
+import me.lynnchurch.assist.R;
 
-import me.lynnchurch.target.R;
-
-
-public class AActivity extends BaseActivity {
-    private static final String TAG = AActivity.class.getSimpleName();
+public class BActivity extends BaseActivity {
+    private static final String TAG = BActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
-        setContentView(R.layout.activity_a);
-        getSupportActionBar().setTitle("Target AActivity");
+        setContentView(R.layout.activity_b);
+        getSupportActionBar().setTitle("Target BActivity");
 
         Intent intent = getIntent();
         String msg = intent.getStringExtra("msg");
@@ -91,17 +87,5 @@ public class AActivity extends BaseActivity {
 
     public void toBActivity(View view) {
         startActivity(new Intent(this, BActivity.class));
-    }
-
-    @Override
-    public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            Intent intent = new Intent();
-            intent.putExtra("msg", "Hello, msg is from Target");
-            setResult(RESULT_OK, intent);
-            finish();
-            return true;
-        }
-        return super.onKeyUp(keyCode, event);
     }
 }

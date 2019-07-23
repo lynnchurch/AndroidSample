@@ -1,4 +1,4 @@
-package me.lynnchurch.target.activity;
+package me.lynnchurch.assist.activity;
 
 import androidx.annotation.NonNull;
 
@@ -7,9 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
-import java.util.logging.Logger;
-
-import me.lynnchurch.target.R;
+import me.lynnchurch.assist.R;
 
 public class CActivity extends BaseActivity {
     private static final String TAG = CActivity.class.getSimpleName();
