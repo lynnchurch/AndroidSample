@@ -99,7 +99,7 @@ public class LifecycleAndLaunchModeActivity extends BaseActivity {
         startActivity(new Intent(this, EActivity.class));
     }
 
-    public void toassistAActivityExplicit(View view) {
+    public void toAssistAActivityExplicit(View view) {
         if (!Utils.isAppInstalled(this, "me.lynnchurch.assist")) {
             toast(R.string.app_not_installed, Toast.LENGTH_SHORT);
             return;
@@ -110,7 +110,7 @@ public class LifecycleAndLaunchModeActivity extends BaseActivity {
         startActivityForResult(intent, REQUEST_CODE_AACTIVITY);
     }
 
-    public void toassistAActivityExplicitWithNewTask(View view) {
+    public void toAssistAActivityExplicitWithNewTask(View view) {
         if (!Utils.isAppInstalled(this, "me.lynnchurch.assist")) {
             toast(R.string.app_not_installed, Toast.LENGTH_SHORT);
             return;
@@ -121,7 +121,7 @@ public class LifecycleAndLaunchModeActivity extends BaseActivity {
         startActivity(intent);
     }
 
-    public void toassistActivityImplicit(View view) {
+    public void toAssistActivityImplicit(View view) {
         Intent intent = new Intent();
         intent.setAction("lynnchurch.intent.action.FIRST");
         intent.addCategory("lynnchurch.intent.category.OK");
@@ -134,7 +134,7 @@ public class LifecycleAndLaunchModeActivity extends BaseActivity {
         startActivity(intent);
     }
 
-    public void toassistCActivityExplicit(View view) {
+    public void toAssistCActivityExplicit(View view) {
         if (!Utils.isAppInstalled(this, "me.lynnchurch.assist")) {
             toast(R.string.app_not_installed, Toast.LENGTH_SHORT);
             return;

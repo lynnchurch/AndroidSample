@@ -12,7 +12,7 @@
         android:name="lynnchurch.permission.MESSENGER"
         android:description="@string/messenger_service_permission_description"
         android:label="send message"
-        android:protectionLevel="normal" />
+        android:protectionLevel="dangerous" />
 
     <application
         android:name=".SamplesApplication"
