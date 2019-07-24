@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
+import butterknife.BindView;
 import me.lynnchurch.samples.R;
 import me.lynnchurch.samples.adapter.TitlesAdapter;
 
@@ -21,30 +22,23 @@ public class MainActivity extends BaseActivity {
     private static final int POSITION_IPC = 1;
     private static final String TAG = MainActivity.class.getSimpleName();
     private final RxPermissions rxPermissions = new RxPermissions(this);
-    private RecyclerView rvTitles;
+    @BindView(R.id.rvTitles)
+    RecyclerView rvTitles;
     private TitlesAdapter titlesAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        requestPermissions();
         init();
     }
 
-    private void requestPermissions(){
-        rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                .subscribe(granted -> {
-                    if(granted) {
-                        Log.i(TAG,"WRITE_EXTERNAL_STORAGE is granted");
-                    } else {
-                        Log.i(TAG,"WRITE_EXTERNAL_STORAGE is not granted");
-                    }
-                });
+    @Override
+    protected int getLayoutResID() {
+        return R.layout.activity_main;
     }
 
-    private void init() {
-        rvTitles = findViewById(R.id.rvTitles);
+    protected void init() {
+        requestPermissions();
         titlesAdapter = new TitlesAdapter(getResources().getStringArray(R.array.titles));
         titlesAdapter.setOnItemClickListener(new TitlesAdapter.OnItemClickListener() {
             @Override
@@ -71,6 +65,17 @@ public class MainActivity extends BaseActivity {
         rvTitles.setLayoutManager(new LinearLayoutManager(this));
         rvTitles.setAdapter(titlesAdapter);
         rvTitles.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
+    }
+
+    private void requestPermissions() {
+        rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .subscribe(granted -> {
+                    if (granted) {
+                        Log.i(TAG, "WRITE_EXTERNAL_STORAGE is granted");
+                    } else {
+                        Log.i(TAG, "WRITE_EXTERNAL_STORAGE is not granted");
+                    }
+                });
     }
 
     @Override
@@ -126,4 +131,5 @@ public class MainActivity extends BaseActivity {
         super.onDestroy();
         Log.i(TAG, "onDestroy");
     }
+
 }

@@ -18,8 +18,12 @@ public class EActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
-        setContentView(R.layout.activity_e);
         getSupportActionBar().setTitle("EActivity");
+    }
+
+    @Override
+    protected int getLayoutResID() {
+        return R.layout.activity_e;
     }
 
     @Override

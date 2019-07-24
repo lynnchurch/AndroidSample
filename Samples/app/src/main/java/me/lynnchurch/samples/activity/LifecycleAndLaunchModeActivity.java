@@ -31,12 +31,16 @@ public class LifecycleAndLaunchModeActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
-        setContentView(R.layout.activity_lifecycle_and_launch_mode);
         getSupportActionBar().setTitle(getResources().getStringArray(R.array.titles)[0]);
         init();
     }
 
-    private void init() {
+    @Override
+    protected int getLayoutResID() {
+        return R.layout.activity_lifecycle_and_launch_mode;
+    }
+
+    protected void init() {
         RxView.clicks(findViewById(R.id.btnLaunchImplicit))
                 .compose(rxPermissions.ensure(Manifest.permission.WRITE_EXTERNAL_STORAGE))
                 .subscribe(granted -> {

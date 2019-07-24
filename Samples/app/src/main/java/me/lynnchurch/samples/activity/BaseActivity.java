@@ -5,12 +5,19 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-public class BaseActivity extends AppCompatActivity {
+import butterknife.ButterKnife;
+
+public abstract class BaseActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        int layoutResID = getLayoutResID();
+        setContentView(layoutResID);
+        ButterKnife.bind(this);
     }
+
+    protected abstract int getLayoutResID();
 
     public void toast(int strResId, int duration) {
         Toast.makeText(this, strResId, duration).show();

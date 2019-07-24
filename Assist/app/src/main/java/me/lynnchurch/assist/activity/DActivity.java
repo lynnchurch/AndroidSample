@@ -16,7 +16,6 @@ public class DActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
-        setContentView(R.layout.activity_d);
         getSupportActionBar().setTitle("Target DActivity");
         Intent intent = getIntent();
         Uri uri = intent.getData();
@@ -24,6 +23,11 @@ public class DActivity extends BaseActivity {
             String type = intent.getType();
             Log.i(TAG, "uri:" + uri + " type:" + type);
         }
+    }
+
+    @Override
+    protected int getLayoutResID() {
+        return R.layout.activity_d;
     }
 
     @Override

@@ -27,12 +27,16 @@ public class MessengerActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_messenger);
         getSupportActionBar().setTitle("Assist Messenger");
         Intent intent = new Intent();
         intent.setClassName("me.lynnchurch.samples", "me.lynnchurch.samples.service.MessengerService");
         bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
         initView();
+    }
+
+    @Override
+    protected int getLayoutResID() {
+        return R.layout.activity_messenger;
     }
 
     private void initView() {

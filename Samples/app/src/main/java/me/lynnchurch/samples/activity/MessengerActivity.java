@@ -1,6 +1,5 @@
 package me.lynnchurch.samples.activity;
 
-import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.ComponentName;
 import android.content.Intent;
@@ -14,10 +13,10 @@ import android.os.RemoteException;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import butterknife.BindView;
 import me.lynnchurch.samples.R;
 import me.lynnchurch.samples.config.Constants;
 import me.lynnchurch.samples.service.MessengerService;
@@ -25,20 +24,24 @@ import me.lynnchurch.samples.service.MessengerService;
 public class MessengerActivity extends BaseActivity {
     private static final String TAG = MessengerActivity.class.getSimpleName();
     private Messenger mMessenger;
-    private TextView tvContent;
+    @BindView(R.id.tvContent)
+    TextView tvContent;
     private StringBuilder mContent = new StringBuilder();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_messenger);
         getSupportActionBar().setTitle("Messenger");
-        bindService(new Intent(this, MessengerService.class), mServiceConnection, BIND_AUTO_CREATE);
-        initView();
+        init();
     }
 
-    private void initView() {
-        tvContent = findViewById(R.id.tvContent);
+    @Override
+    protected int getLayoutResID() {
+        return R.layout.activity_messenger;
+    }
+
+    private void init() {
+        bindService(new Intent(this, MessengerService.class), mServiceConnection, BIND_AUTO_CREATE);
         tvContent.setMovementMethod(ScrollingMovementMethod.getInstance());
     }
 
@@ -95,4 +98,5 @@ public class MessengerActivity extends BaseActivity {
         unbindService(mServiceConnection);
         super.onDestroy();
     }
+
 }

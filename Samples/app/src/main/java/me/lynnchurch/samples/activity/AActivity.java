@@ -17,9 +17,13 @@ public class AActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
-        setContentView(R.layout.activity_a);
         getSupportActionBar().setTitle("AActivity");
         getLifecycle().addObserver(new MyLifecycleObserver(getLifecycle()));
+    }
+
+    @Override
+    protected int getLayoutResID() {
+        return R.layout.activity_a;
     }
 
     @Override

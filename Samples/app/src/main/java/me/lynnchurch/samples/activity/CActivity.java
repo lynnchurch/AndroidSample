@@ -16,8 +16,12 @@ public class CActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
-        setContentView(R.layout.activity_c);
         getSupportActionBar().setTitle("CActivity");
+    }
+
+    @Override
+    protected int getLayoutResID() {
+        return R.layout.activity_c;
     }
 
     @Override

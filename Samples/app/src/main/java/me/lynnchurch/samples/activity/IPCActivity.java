@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import butterknife.BindView;
+import butterknife.OnClick;
 import me.lynnchurch.samples.aidl.Book_AIDL;
 import me.lynnchurch.samples.aidl.IOnBookArrivedListener;
 import me.lynnchurch.samples.anim.BookItemAnimator;
@@ -36,8 +38,9 @@ import me.lynnchurch.samples.service.BooksService;
 
 public class IPCActivity extends BaseActivity {
     private static final String TAG = IPCActivity.class.getSimpleName();
-    private RecyclerView rvBooks;
-    private Button btnAddBook;
+
+    @BindView(R.id.rvBooks)
+    RecyclerView rvBooks;
     private BooksAdapter mBooksAdapter;
     private ArrayList<Book_AIDL> mBookAIDLS = new ArrayList<>();
     private IBookManager mBookManager;
@@ -46,17 +49,17 @@ public class IPCActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_ipc);
         getSupportActionBar().setTitle(getResources().getStringArray(R.array.titles)[1]);
-
         bindService(new Intent(this, BooksService.class), mServiceConnection, BIND_AUTO_CREATE);
         init();
     }
 
-    private void init() {
-        rvBooks = findViewById(R.id.rvBooks);
-        btnAddBook = findViewById(R.id.btnAddBook);
+    @Override
+    protected int getLayoutResID() {
+        return R.layout.activity_ipc;
+    }
 
+    protected void init() {
         mBooksAdapter = new BooksAdapter(mBookAIDLS);
         mBooksAdapter.setOnItemClickListener(new BooksAdapter.OnItemClickListener() {
             @Override
@@ -76,26 +79,27 @@ public class IPCActivity extends BaseActivity {
         bookItemAnimator.setAddDuration(300);
         bookItemAnimator.setRemoveDuration(300);
         rvBooks.setItemAnimator(bookItemAnimator);
-        btnAddBook.setOnClickListener(v -> {
-            if (null == mBookManager) {
-                return;
+    }
+
+    @OnClick(R.id.btnAddBook)
+    void addBook() {
+        if (null == mBookManager) {
+            return;
+        }
+        long id = mRandom.nextLong();
+        Book_AIDL bookAIDL = new Book_AIDL(id, "书籍" + id);
+        mBookAIDLS.add(0, bookAIDL);
+        mBooksAdapter.notifyItemInserted(0);
+        mBooksAdapter.notifyItemRangeChanged(0, mBookAIDLS.size());
+        rvBooks.scrollToPosition(0);
+
+        new Thread(() -> {
+            try {
+                mBookManager.addBook(bookAIDL);
+            } catch (RemoteException e) {
+                Log.i(TAG, e.getMessage(), e);
             }
-            long id = mRandom.nextLong();
-            Book_AIDL bookAIDL = new Book_AIDL(id, "书籍" + id);
-            mBookAIDLS.add(0, bookAIDL);
-            mBooksAdapter.notifyItemInserted(0);
-            mBooksAdapter.notifyItemRangeChanged(0, mBookAIDLS.size());
-            rvBooks.scrollToPosition(0);
-
-            new Thread(() -> {
-                try {
-                    mBookManager.addBook(bookAIDL);
-                } catch (RemoteException e) {
-                    Log.i(TAG, e.getMessage(), e);
-                }
-            }).start();
-
-        });
+        }).start();
     }
 
     @Override
@@ -225,4 +229,5 @@ public class IPCActivity extends BaseActivity {
             }
         }
     }
+
 }

@@ -16,8 +16,12 @@ public class DActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
-        setContentView(R.layout.activity_d);
         getSupportActionBar().setTitle("DActivity");
+    }
+
+    @Override
+    protected int getLayoutResID() {
+        return R.layout.activity_d;
     }
 
     @Override

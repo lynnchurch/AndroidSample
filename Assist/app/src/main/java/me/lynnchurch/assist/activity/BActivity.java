@@ -17,7 +17,6 @@ public class BActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
-        setContentView(R.layout.activity_b);
         getSupportActionBar().setTitle("Target BActivity");
 
         Intent intent = getIntent();
@@ -25,6 +24,11 @@ public class BActivity extends BaseActivity {
         if (null != msg) {
             toast("Got msg：" + msg, Toast.LENGTH_LONG);
         }
+    }
+
+    @Override
+    protected int getLayoutResID() {
+        return R.layout.activity_b;
     }
 
     @Override
