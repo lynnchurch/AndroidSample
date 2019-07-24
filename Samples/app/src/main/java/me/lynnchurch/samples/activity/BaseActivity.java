@@ -6,15 +6,17 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import butterknife.ButterKnife;
+import butterknife.Unbinder;
 
 public abstract class BaseActivity extends AppCompatActivity {
+    private Unbinder mUnbinder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         int layoutResID = getLayoutResID();
         setContentView(layoutResID);
-        ButterKnife.bind(this);
+        mUnbinder = ButterKnife.bind(this);
     }
 
     protected abstract int getLayoutResID();
@@ -25,5 +27,11 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     public void toast(String str, int duration) {
         Toast.makeText(this, str, duration).show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mUnbinder.unbind();
     }
 }
