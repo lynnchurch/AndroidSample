@@ -4,4 +4,5 @@
     android:layout_height="?listPreferredItemHeightSmall"
     android:background="?attr/selectableItemBackground"
     android:gravity="center_vertical"
-    android:paddingLeft="16dp" />
+    android:paddingLeft="16dp"
+    android:textAppearance="?textAppearanceListItemSecondary" />

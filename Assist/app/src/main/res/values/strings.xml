@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Assist</string>
+    <string name="library_provider_permission_description">manage library by LibraryProvider</string>
 </resources>

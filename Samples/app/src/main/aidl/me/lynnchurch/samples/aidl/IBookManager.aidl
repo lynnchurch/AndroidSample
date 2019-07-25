@@ -8,7 +8,7 @@ import me.lynnchurch.samples.aidl.IOnBookArrivedListener;
 
 interface IBookManager {
     List<Book_AIDL> getBookList();
-    void addBook(in Book_AIDL bookAIDL);
+    long addBook(in Book_AIDL bookAIDL);
     void delBook(in long bookId);
     void addIOnBookArrivedListener(in IOnBookArrivedListener iOnBookArrivedListener);
     void removeIOnBookArrivedListener(in IOnBookArrivedListener iOnBookArrivedListener);

@@ -9,30 +9,25 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Observer;
-import io.reactivex.Scheduler;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Function;
-import io.reactivex.schedulers.Schedulers;
 import me.lynnchurch.samples.aidl.Book_AIDL;
 import me.lynnchurch.samples.aidl.IBookManager;
 import me.lynnchurch.samples.aidl.IOnBookArrivedListener;
 import me.lynnchurch.samples.db.LynnDatabase;
-import me.lynnchurch.samples.db.bean.Book;
+import me.lynnchurch.samples.db.entity.Book;
 
 public class BooksService extends Service {
     private static final String TAG = BooksService.class.getSimpleName();
     private AtomicBoolean mIsServiceDestroyed = new AtomicBoolean(false);
     private RemoteCallbackList<IOnBookArrivedListener> mIOnBookArrivedListeners = new RemoteCallbackList<>();
     private Disposable mDisposable;
+    private Random mRandom = new Random();
 
     public BooksService() {
     }
@@ -46,10 +41,11 @@ public class BooksService extends Service {
                 return null;
             }
             Log.i(TAG, "aLong:" + aLong);
-            long bookId = System.currentTimeMillis();
-            Book book = new Book(bookId, "新书 " + bookId);
-            LynnDatabase.getInstance(getApplicationContext()).getBookDao().addBook(book);
-            return convertToBook_AIDL(book);
+            Book book = new Book();
+            book.setName("新书 " + Math.abs(mRandom.nextInt()));
+            long id = LynnDatabase.getInstance(getApplicationContext()).getBookDao().addBook(book);
+            Log.i(TAG, "addBook id:" + id);
+            return book.convertToBook_AIDL();
         }).subscribe(new Observer<Book_AIDL>() {
             @Override
             public void onSubscribe(Disposable d) {
@@ -102,16 +98,18 @@ public class BooksService extends Service {
             List<Book> books = LynnDatabase.getInstance(getApplicationContext()).getBookDao().getBooks();
             List<Book_AIDL> book_aidls = new ArrayList<>();
             for (Book book : books) {
-                book_aidls.add(convertToBook_AIDL(book));
+                book_aidls.add(book.convertToBook_AIDL());
             }
             Log.i(TAG, "getBookList size:" + book_aidls.size());
             return book_aidls;
         }
 
         @Override
-        public void addBook(Book_AIDL bookAIDL) {
+        public long addBook(Book_AIDL bookAIDL) {
             Log.i(TAG, "addBook:" + bookAIDL);
-            LynnDatabase.getInstance(getApplicationContext()).getBookDao().addBook(convertToBook(bookAIDL));
+            long id = LynnDatabase.getInstance(getApplicationContext()).getBookDao().addBook(bookAIDL.convertToBook());
+            Log.i(TAG, "addBook id:" + id);
+            return id;
         }
 
         @Override
@@ -130,14 +128,4 @@ public class BooksService extends Service {
             mIOnBookArrivedListeners.unregister(iOnBookArrivedListener);
         }
     };
-
-    public Book_AIDL convertToBook_AIDL(Book book) {
-        Book_AIDL book_aidl = new Book_AIDL(book.getId(), book.getName());
-        return book_aidl;
-    }
-
-    public Book convertToBook(Book_AIDL book_aidl) {
-        Book book = new Book(book_aidl.getId(), book_aidl.getName());
-        return book;
-    }
 }

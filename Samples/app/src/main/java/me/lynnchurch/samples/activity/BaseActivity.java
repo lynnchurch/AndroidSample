@@ -29,9 +29,5 @@ public abstract class BaseActivity extends AppCompatActivity {
         Toast.makeText(this, str, duration).show();
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mUnbinder.unbind();
-    }
+
 }

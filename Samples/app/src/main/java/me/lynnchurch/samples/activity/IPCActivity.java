@@ -19,7 +19,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,11 +26,19 @@ import java.util.Random;
 
 import butterknife.BindView;
 import butterknife.OnClick;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 import me.lynnchurch.samples.aidl.Book_AIDL;
 import me.lynnchurch.samples.aidl.IOnBookArrivedListener;
 import me.lynnchurch.samples.anim.BookItemAnimator;
 import me.lynnchurch.samples.R;
-import me.lynnchurch.samples.adapter.BooksAdapter;
+import me.lynnchurch.samples.adapter.LibraryAdapter;
 import me.lynnchurch.samples.aidl.IBookManager;
 import me.lynnchurch.samples.config.Constants;
 import me.lynnchurch.samples.service.BooksService;
@@ -41,8 +48,8 @@ public class IPCActivity extends BaseActivity {
 
     @BindView(R.id.rvBooks)
     RecyclerView rvBooks;
-    private BooksAdapter mBooksAdapter;
-    private ArrayList<Book_AIDL> mBookAIDLS = new ArrayList<>();
+    private LibraryAdapter mLibraryAdapter;
+    private ArrayList<LibraryAdapter.Library> mLibraries = new ArrayList<>();
     private IBookManager mBookManager;
     private Random mRandom = new Random();
 
@@ -60,8 +67,8 @@ public class IPCActivity extends BaseActivity {
     }
 
     protected void init() {
-        mBooksAdapter = new BooksAdapter(mBookAIDLS);
-        mBooksAdapter.setOnItemClickListener(new BooksAdapter.OnItemClickListener() {
+        mLibraryAdapter = new LibraryAdapter(mLibraries);
+        mLibraryAdapter.setOnItemClickListener(new LibraryAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View v, int position) {
 
@@ -73,7 +80,7 @@ public class IPCActivity extends BaseActivity {
             }
         });
         rvBooks.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
-        rvBooks.setAdapter(mBooksAdapter);
+        rvBooks.setAdapter(mLibraryAdapter);
         rvBooks.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         BookItemAnimator bookItemAnimator = new BookItemAnimator();
         bookItemAnimator.setAddDuration(300);
@@ -86,20 +93,29 @@ public class IPCActivity extends BaseActivity {
         if (null == mBookManager) {
             return;
         }
-        long id = mRandom.nextLong();
-        Book_AIDL bookAIDL = new Book_AIDL(id, "书籍" + id);
-        mBookAIDLS.add(0, bookAIDL);
-        mBooksAdapter.notifyItemInserted(0);
-        mBooksAdapter.notifyItemRangeChanged(0, mBookAIDLS.size());
-        rvBooks.scrollToPosition(0);
 
-        new Thread(() -> {
+        Observable.create((ObservableOnSubscribe<LibraryAdapter.Library>) emitter -> {
+            Book_AIDL bookAIDL = new Book_AIDL(0, "书籍 " + Math.abs(mRandom.nextInt()));
+            long id = 0;
             try {
-                mBookManager.addBook(bookAIDL);
+                 id = mBookManager.addBook(bookAIDL);
             } catch (RemoteException e) {
                 Log.i(TAG, e.getMessage(), e);
+                emitter.onError(e);
+                return;
             }
-        }).start();
+            bookAIDL.setId(id);
+            LibraryAdapter.Library library = new LibraryAdapter.Library();
+            library.type = LibraryAdapter.Library.TYPE_BOOK;
+            library.book = bookAIDL.convertToBook();
+            emitter.onNext(library);
+        }).subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread())
+                .subscribe(library -> {
+                    mLibraries.add(0, library);
+                    mLibraryAdapter.notifyItemInserted(0);
+                    mLibraryAdapter.notifyItemRangeChanged(0, mLibraries.size());
+                    rvBooks.scrollToPosition(0);
+                });
     }
 
     @Override
@@ -130,10 +146,10 @@ public class IPCActivity extends BaseActivity {
                     if (null == mBookManager) {
                         return true;
                     }
-                    long id = mBookAIDLS.get(position).getId();
-                    mBookAIDLS.remove(position);
-                    mBooksAdapter.notifyItemRemoved(position);
-                    mBooksAdapter.notifyItemRangeChanged(position, mBookAIDLS.size());
+                    long id = mLibraries.get(position).book.get_id();
+                    mLibraries.remove(position);
+                    mLibraryAdapter.notifyItemRemoved(position);
+                    mLibraryAdapter.notifyItemRangeChanged(position, mLibraries.size());
 
                     new Thread(() -> {
                         try {
@@ -201,15 +217,25 @@ public class IPCActivity extends BaseActivity {
                 case Constants
                         .MSG_NEW_BOOK_ARRIVED:
                     Book_AIDL book_aidl = (Book_AIDL) msg.obj;
-                    mBookAIDLS.add(0, book_aidl);
-                    mBooksAdapter.notifyItemInserted(0);
-                    mBooksAdapter.notifyItemRangeChanged(0, mBookAIDLS.size());
+                    LibraryAdapter.Library library = new LibraryAdapter.Library();
+                    library.type = LibraryAdapter.Library.TYPE_BOOK;
+                    library.book = book_aidl.convertToBook();
+                    mLibraries.add(0, library);
+                    mLibraryAdapter.notifyItemInserted(0);
+                    mLibraryAdapter.notifyItemRangeChanged(0, mLibraries.size());
                     rvBooks.scrollToPosition(0);
                     break;
                 case Constants.MSG_GET_BOOK_LIST:
                     List<Book_AIDL> books = (List<Book_AIDL>) msg.obj;
-                    mBookAIDLS.addAll(books);
-                    mBooksAdapter.notifyDataSetChanged();
+                    List<LibraryAdapter.Library> libraries = new ArrayList<>();
+                    for(Book_AIDL book_aidl1 : books) {
+                        LibraryAdapter.Library library1 = new LibraryAdapter.Library();
+                        library1.type = LibraryAdapter.Library.TYPE_BOOK;
+                        library1.book = book_aidl1.convertToBook();
+                        libraries.add(library1);
+                    }
+                    mLibraries.addAll(libraries);
+                    mLibraryAdapter.notifyDataSetChanged();
                     break;
                 default:
                     super.handleMessage(msg);

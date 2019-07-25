@@ -20,6 +20,7 @@ import me.lynnchurch.samples.adapter.TitlesAdapter;
 public class MainActivity extends BaseActivity {
     private static final int POSITION_LIFECYCLE_AND_LAUNCH_MODE = 0;
     private static final int POSITION_IPC = 1;
+    private static final int POSITION_CONTENT_PROVIDER = 2;
     private static final String TAG = MainActivity.class.getSimpleName();
     private final RxPermissions rxPermissions = new RxPermissions(this);
     @BindView(R.id.rvTitles)
@@ -51,6 +52,9 @@ public class MainActivity extends BaseActivity {
                         break;
                     case POSITION_IPC:
                         intent = new Intent(MainActivity.this, IPCActivity.class);
+                        break;
+                    case POSITION_CONTENT_PROVIDER:
+                        intent = new Intent(MainActivity.this, ContentProviderActivity.class);
                         break;
                     default:
                         intent = new Intent(MainActivity.this, LifecycleAndLaunchModeActivity.class);

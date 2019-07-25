@@ -7,14 +7,14 @@
         android:description="@string/books_service_permission_description"
         android:label="manage books"
         android:protectionLevel="normal" />
-
     <permission
         android:name="lynnchurch.permission.MESSENGER"
         android:description="@string/messenger_service_permission_description"
         android:label="send message"
         android:protectionLevel="dangerous" />
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="lynnchurch.permission.LIBRARY_PROVIDER" />
 
     <application
         android:name=".SamplesApplication"
@@ -25,6 +25,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="me.lynnchurch.samples.fileprovider"
@@ -70,9 +71,12 @@
             android:name=".activity.IPCActivity"
             android:configChanges="orientation|screenSize"
             android:launchMode="singleTop" />
-
         <activity
             android:name=".activity.MessengerActivity"
+            android:configChanges="orientation|screenSize"
+            android:launchMode="singleTop" />
+        <activity
+            android:name=".activity.ContentProviderActivity"
             android:configChanges="orientation|screenSize"
             android:launchMode="singleTop" />
 
@@ -82,14 +86,12 @@
             android:exported="true"
             android:permission="lynnchurch.permission.MANAGE_BOOKS"
             android:process="me.lynnchurch.samples.service" />
-
         <service
             android:name=".service.MessengerService"
             android:enabled="true"
             android:exported="true"
             android:permission="lynnchurch.permission.MESSENGER"
             android:process=":messenger" />
-
     </application>
 
 </manifest>

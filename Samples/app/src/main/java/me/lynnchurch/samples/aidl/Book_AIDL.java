@@ -3,6 +3,8 @@ package me.lynnchurch.samples.aidl;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import me.lynnchurch.samples.db.entity.Book;
+
 public class Book_AIDL implements Parcelable {
     private long id;
     private String name;
@@ -62,5 +64,12 @@ public class Book_AIDL implements Parcelable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Book convertToBook() {
+        Book book = new Book();
+        book.set_id(getId());
+        book.setName(getName());
+        return book;
     }
 }

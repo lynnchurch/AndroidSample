@@ -1,4 +1,6 @@
-package me.lynnchurch.samples.db.dao;
+package me.lynnchurch.assist.db.dao;
+
+import android.database.Cursor;
 
 import androidx.room.Dao;
 import androidx.room.Delete;
@@ -7,17 +9,20 @@ import androidx.room.Query;
 
 import java.util.List;
 
-import me.lynnchurch.samples.db.entity.Book;
+import me.lynnchurch.assist.db.entity.Book;
 
 @Dao
 public interface BookDao {
     @Query("select * from book")
     List<Book> getBooks();
 
+    @Query("select * from book")
+    Cursor getBooksCursor();
+
     @Insert
     long addBook(Book book);
 
-    @Delete(entity = Book.class)
-    void delBook(Book.BookId bookId);
+    @Delete
+    void delBook(Book book);
 
 }
