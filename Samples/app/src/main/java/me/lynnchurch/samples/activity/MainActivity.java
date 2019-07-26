@@ -51,7 +51,7 @@ public class MainActivity extends BaseActivity {
                         intent = new Intent(MainActivity.this, LifecycleAndLaunchModeActivity.class);
                         break;
                     case POSITION_IPC:
-                        intent = new Intent(MainActivity.this, IPCActivity.class);
+                        intent = new Intent(MainActivity.this, AIDLActivity.class);
                         break;
                     case POSITION_CONTENT_PROVIDER:
                         intent = new Intent(MainActivity.this, ContentProviderActivity.class);

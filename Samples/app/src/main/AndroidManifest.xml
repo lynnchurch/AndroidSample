@@ -68,7 +68,7 @@
             android:launchMode="singleTask"
             android:taskAffinity="me.lynnchurch.samples.task1" />
         <activity
-            android:name=".activity.IPCActivity"
+            android:name=".activity.AIDLActivity"
             android:configChanges="orientation|screenSize"
             android:launchMode="singleTop" />
         <activity

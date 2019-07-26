@@ -2,7 +2,7 @@
     <string name="app_name">Samples</string>
     <string-array name="titles">
         <item>Activity的生命周期和启动模式</item>
-        <item>IPC机制</item>
+        <item>AIDL、Messenger</item>
         <item>ContentProvider</item>
     </string-array>
     <string name="app_not_installed">应用未安装</string>

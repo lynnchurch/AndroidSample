@@ -27,12 +27,8 @@ import java.util.Random;
 import butterknife.BindView;
 import butterknife.OnClick;
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import me.lynnchurch.samples.aidl.Book_AIDL;
 import me.lynnchurch.samples.aidl.IOnBookArrivedListener;
@@ -43,8 +39,8 @@ import me.lynnchurch.samples.aidl.IBookManager;
 import me.lynnchurch.samples.config.Constants;
 import me.lynnchurch.samples.service.BooksService;
 
-public class IPCActivity extends BaseActivity {
-    private static final String TAG = IPCActivity.class.getSimpleName();
+public class AIDLActivity extends BaseActivity {
+    private static final String TAG = AIDLActivity.class.getSimpleName();
 
     @BindView(R.id.rvBooks)
     RecyclerView rvBooks;
@@ -63,7 +59,7 @@ public class IPCActivity extends BaseActivity {
 
     @Override
     protected int getLayoutResID() {
-        return R.layout.activity_ipc;
+        return R.layout.activity_aidl;
     }
 
     protected void init() {
@@ -128,7 +124,7 @@ public class IPCActivity extends BaseActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.messenger:
-                startActivity(new Intent(IPCActivity.this, MessengerActivity.class));
+                startActivity(new Intent(AIDLActivity.this, MessengerActivity.class));
                 break;
             default:
                 return onContextItemSelected(item);
@@ -197,7 +193,7 @@ public class IPCActivity extends BaseActivity {
             }
             mBookManager.asBinder().unlinkToDeath(mDeathRecipient, 0);
             mBookManager = null;
-            bindService(new Intent(IPCActivity.this, BooksService.class), mServiceConnection, BIND_AUTO_CREATE);
+            bindService(new Intent(AIDLActivity.this, BooksService.class), mServiceConnection, BIND_AUTO_CREATE);
         }
     };
 
