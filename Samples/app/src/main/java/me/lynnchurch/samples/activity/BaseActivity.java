@@ -5,10 +5,12 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.trello.rxlifecycle3.components.support.RxAppCompatActivity;
+
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
-public abstract class BaseActivity extends AppCompatActivity {
+public abstract class BaseActivity extends RxAppCompatActivity {
     private Unbinder mUnbinder;
 
     @Override
@@ -29,5 +31,9 @@ public abstract class BaseActivity extends AppCompatActivity {
         Toast.makeText(this, str, duration).show();
     }
 
-
+    @Override
+    protected void onDestroy() {
+        mUnbinder.unbind();
+        super.onDestroy();
+    }
 }

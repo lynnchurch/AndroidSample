@@ -10,4 +10,4 @@ Android的一些示例，方便学习研究，其中Samples是主项目，Assist
 4. ButterKnife
 5. Lifecycle
 6. Room
-7. Rxjava、RxAndroid、RxPermissions、RxBinding
+7. Rxjava、RxAndroid、RxPermissions、RxBinding、RxBus、RxLifecycle

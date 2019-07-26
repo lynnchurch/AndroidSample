@@ -5,8 +5,8 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.util.Log;
 
-public class TargetApplication extends Application {
-    private static final String TAG = TargetApplication.class.getSimpleName();
+public class AssistApplication extends Application {
+    private static final String TAG = AssistApplication.class.getSimpleName();
 
     @Override
     protected void attachBaseContext(Context base) {
