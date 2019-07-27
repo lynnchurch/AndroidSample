@@ -20,4 +20,5 @@ public class Utils {
     public static boolean isAppInstalled(Context context, Intent intent) {
         return (intent.resolveActivity(context.getPackageManager()) != null);
     }
+
 }

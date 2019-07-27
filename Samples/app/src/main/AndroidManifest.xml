@@ -15,6 +15,12 @@
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="lynnchurch.permission.LIBRARY_PROVIDER" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"></uses-permission>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"></uses-permission>
+    <uses-permission android:name="android.permission.WAKE_LOCK"></uses-permission>
+
 
     <application
         android:name=".SamplesApplication"
@@ -79,6 +85,10 @@
             android:name=".activity.ContentProviderActivity"
             android:configChanges="orientation|screenSize"
             android:launchMode="singleTop" />
+        <activity
+            android:name=".activity.SocketActivity"
+            android:configChanges="orientation|screenSize"
+            android:launchMode="singleTop" />
 
         <service
             android:name=".service.BooksService"
@@ -92,6 +102,11 @@
             android:exported="true"
             android:permission="lynnchurch.permission.MESSENGER"
             android:process=":messenger" />
+
+        <service
+            android:name=".service.UDPSocketService"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 
 </manifest>

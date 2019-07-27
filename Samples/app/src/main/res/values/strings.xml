@@ -4,8 +4,13 @@
         <item>Activity的生命周期和启动模式</item>
         <item>AIDL、Messenger</item>
         <item>ContentProvider</item>
+        <item>Socket</item>
     </string-array>
     <string name="app_not_installed">应用未安装</string>
     <string name="books_service_permission_description">manage books by BooksService</string>
     <string name="messenger_service_permission_description">send message by MessengerService</string>
+    <string name="start_server">开启服务端</string>
+    <string name="stop_server">关闭服务端</string>
+    <string name="start_client">开启客户端</string>
+    <string name="stop_client">关闭客户端</string>
 </resources>
