@@ -110,6 +110,6 @@ public class MainActivity extends BaseActivity {
     }
 
     public void toIPCActivity(View view) {
-        startActivity(new Intent(this, IPCActivity.class));
+        startActivity(new Intent(this, AIDLActivity.class));
     }
 }

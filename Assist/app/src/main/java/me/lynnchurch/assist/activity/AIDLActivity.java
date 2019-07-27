@@ -14,7 +14,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 
 import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -25,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import butterknife.BindView;
+import butterknife.OnClick;
 import me.lynnchurch.assist.R;
 import me.lynnchurch.assist.adapter.BooksAdapter;
 import me.lynnchurch.assist.config.Constants;
@@ -32,10 +33,12 @@ import me.lynnchurch.samples.aidl.Book_AIDL;
 import me.lynnchurch.samples.aidl.IBookManager;
 import me.lynnchurch.samples.aidl.IOnBookArrivedListener;
 
-public class IPCActivity extends BaseActivity {
-    private static final String TAG = IPCActivity.class.getSimpleName();
-    private RecyclerView rvBooks;
-    private Button btnAddBook;
+public class AIDLActivity extends BaseActivity {
+    private static final String TAG = AIDLActivity.class.getSimpleName();
+
+    @BindView(R.id.rvBooks)
+    RecyclerView rvBooks;
+
     private BooksAdapter mBooksAdapter;
     private ArrayList<Book_AIDL> mBookAIDLS = new ArrayList<>();
     private IBookManager mBookManager;
@@ -53,12 +56,10 @@ public class IPCActivity extends BaseActivity {
 
     @Override
     protected int getLayoutResID() {
-        return R.layout.activity_ipc;
+        return R.layout.activity_aidl;
     }
 
     private void init() {
-        rvBooks = findViewById(R.id.rvBooks);
-        btnAddBook = findViewById(R.id.btnAddBook);
 
         mBooksAdapter = new BooksAdapter(mBookAIDLS);
         mBooksAdapter.setOnItemClickListener(new BooksAdapter.OnItemClickListener() {
@@ -75,26 +76,27 @@ public class IPCActivity extends BaseActivity {
         rvBooks.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
         rvBooks.setAdapter(mBooksAdapter);
         rvBooks.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
-        btnAddBook.setOnClickListener(v -> {
-            if (null == mBookManager) {
-                return;
+    }
+
+    @OnClick(R.id.btnAddBook)
+    void addBook() {
+        if (null == mBookManager) {
+            return;
+        }
+        long id = mRandom.nextLong();
+        Book_AIDL bookAIDL = new Book_AIDL(id, "书籍" + id);
+        mBookAIDLS.add(0, bookAIDL);
+        mBooksAdapter.notifyItemInserted(0);
+        mBooksAdapter.notifyItemRangeChanged(0, mBookAIDLS.size());
+        rvBooks.scrollToPosition(0);
+
+        new Thread(() -> {
+            try {
+                mBookManager.addBook(bookAIDL);
+            } catch (RemoteException e) {
+                Log.i(TAG, e.getMessage(), e);
             }
-            long id = mRandom.nextLong();
-            Book_AIDL bookAIDL = new Book_AIDL(id, "书籍" + id);
-            mBookAIDLS.add(0, bookAIDL);
-            mBooksAdapter.notifyItemInserted(0);
-            mBooksAdapter.notifyItemRangeChanged(0, mBookAIDLS.size());
-            rvBooks.scrollToPosition(0);
-
-            new Thread(() -> {
-                try {
-                    mBookManager.addBook(bookAIDL);
-                } catch (RemoteException e) {
-                    Log.i(TAG, e.getMessage(), e);
-                }
-            }).start();
-
-        });
+        }).start();
     }
 
     @Override
@@ -107,7 +109,7 @@ public class IPCActivity extends BaseActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.messenger:
-                startActivity(new Intent(IPCActivity.this, MessengerActivity.class));
+                startActivity(new Intent(AIDLActivity.this, MessengerActivity.class));
                 break;
             default:
                 return onContextItemSelected(item);
