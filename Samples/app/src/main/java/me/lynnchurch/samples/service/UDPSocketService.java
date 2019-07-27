@@ -10,6 +10,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -51,85 +52,85 @@ public class UDPSocketService extends SocketService {
     }
 
     public void startServer() {
-        try {
-            mServerTcpPort = mRandom.nextInt(65536) % (65536 - 1024) + 1024;
-            if(null == mServerSocket) {
+        mServerTcpPort = mRandom.nextInt(65536) % (65536 - 1024) + 1024;
+        if (null == mServerSocket) {
+            try {
                 mServerSocket = new DatagramSocket();
+                mServerPacket = new DatagramPacket(mServerBuffer, mServerBuffer.length, InetAddress.getByName(getBroadcastIP()), CLIENT_LISTENING_UDP_PORT);
+            } catch (UnknownHostException e) {
+                Log.e(TAG, e.getMessage(), e);
+            } catch (SocketException e) {
+                Log.e(TAG, e.getMessage(), e);
             }
-            mServerDisposable = Observable.interval(5, TimeUnit.SECONDS).observeOn(Schedulers.io())
-                    .subscribe(aLong -> {
-                        if (!isWifiEnabled() || !isNetConnected()) {
-                            Log.i(TAG, "is waiting network available ...");
-                            RxBus.getInstance().post(new SocketEvent("is waiting network available ..."));
-                            return;
-                        }
-                        if (null == mServerPacket) {
-                            mServerPacket = new DatagramPacket(mServerBuffer, mServerBuffer.length, InetAddress.getByName(getBroadcastIP()), CLIENT_LISTENING_UDP_PORT);
-                        }
-                        if (null == mServerSocket || mServerSocket.isClosed()) {
-                            return;
-                        }
-                        mServerPacket.setData((getLocalIP() + ":" + mServerTcpPort).getBytes());
-                        mServerSocket.send(mServerPacket);
-                        Log.i(TAG, "server is broadcasting by udp ...");
-                        RxBus.getInstance().post(new SocketEvent("server is broadcasting by udp ..."));
-                    });
-        } catch (SocketException e) {
-            Log.e(TAG, e.getMessage(), e);
         }
+        mServerDisposable = Observable.interval(5, TimeUnit.SECONDS)
+                .observeOn(Schedulers.newThread())
+                .subscribe(aLong -> {
+                    if (!isWifiEnabled() || !isNetConnected()) {
+                        Log.i(TAG, "is waiting network available ...");
+                        RxBus.getInstance().post(new SocketEvent("is waiting network available ..."));
+                        return;
+                    }
+                    Log.i(TAG, "mServerSocket:" + mServerSocket);
+                    if (null == mServerSocket || mServerSocket.isClosed()) {
+                        return;
+                    }
+                    mServerPacket.setData((getLocalIP() + ":" + mServerTcpPort).getBytes());
+                    mServerSocket.send(mServerPacket);
+                    Log.i(TAG, "server is broadcasting by udp ...");
+                    if (!mServerDisposable.isDisposed()) {
+                        RxBus.getInstance().post(new SocketEvent("server is broadcasting by udp ..."));
+                    }
+                });
     }
 
     public void stopServer() {
         if (null != mServerDisposable) {
             mServerDisposable.dispose();
-            new Thread(() -> {
-                mServerSocket.disconnect();
-                mServerSocket.close();
-            }).start();
+            new Thread(() -> mServerSocket.disconnect()).start();
         }
         RxBus.getInstance().post(new SocketEvent("server is stopped"));
     }
 
     public void startClient() {
-        try {
-            if (null == mClientSocket) {
+        if (null == mClientSocket) {
+            try {
                 mClientSocket = new DatagramSocket(CLIENT_LISTENING_UDP_PORT);
                 mClientSocket.setReuseAddress(true);
-                mClientPacket = new DatagramPacket(mClientBuffer, mClientBuffer.length);
+            } catch (SocketException e) {
+                Log.e(TAG, e.getMessage(), e);
             }
-            mClientDisposable = Observable.interval(1, TimeUnit.SECONDS)
-                    .observeOn(Schedulers.io())
-                    .subscribe(aLong -> {
-                        if (!isWifiEnabled() || !isNetConnected()) {
-                            Log.i(TAG, "is waiting network available ...");
-                            RxBus.getInstance().post(new SocketEvent("is waiting network available ..."));
-                            return;
-                        }
-                        if (null == mClientSocket || mClientSocket.isClosed()) {
-                            return;
-                        }
-                        mClientSocket.receive(mClientPacket);
-                        String receiveData = new String(mClientPacket.getData(), mClientPacket.getOffset(), mClientPacket.getLength());
-
-                        SocketAddress socketAddress = mClientPacket.getSocketAddress();
-                        Log.i(TAG, "socketAddress：" + socketAddress);
-
-                        String msg = new StringBuilder("received packetData:\n").append(receiveData).append("\nfrom：" + socketAddress).toString();
-                        Log.i(TAG, msg);
-                        RxBus.getInstance().post(new SocketEvent(msg));
-                    });
-        } catch (SocketException e) {
-            Log.e(TAG, e.getMessage(), e);
+            mClientPacket = new DatagramPacket(mClientBuffer, mClientBuffer.length);
         }
+        mClientDisposable = Observable.interval(1, TimeUnit.SECONDS)
+                .observeOn(Schedulers.newThread())
+                .subscribe(aLong -> {
+                    if (!isWifiEnabled() || !isNetConnected()) {
+                        Log.i(TAG, "is waiting network available ...");
+                        RxBus.getInstance().post(new SocketEvent("is waiting network available ..."));
+                        return;
+                    }
+                    if (null == mClientSocket || mClientSocket.isClosed()) {
+                        return;
+                    }
+                    mClientSocket.receive(mClientPacket);
+                    String receiveData = new String(mClientPacket.getData(), mClientPacket.getOffset(), mClientPacket.getLength());
+
+                    SocketAddress socketAddress = mClientPacket.getSocketAddress();
+                    Log.i(TAG, "socketAddress：" + socketAddress);
+
+                    String msg = new StringBuilder("received packetData:\n").append(receiveData).append("\nfrom：" + socketAddress).toString();
+                    Log.i(TAG, msg);
+                    if (!mClientDisposable.isDisposed()) {
+                        RxBus.getInstance().post(new SocketEvent(msg));
+                    }
+                });
     }
 
     public void stopClient() {
         if (null != mClientDisposable) {
             mClientDisposable.dispose();
-            new Thread(() -> {
-                mClientSocket.disconnect();
-                mClientSocket.close();
-            });
+            new Thread(() -> mClientSocket.disconnect());
         }
         RxBus.getInstance().post(new SocketEvent("client is stopped"));
     }
@@ -142,8 +143,14 @@ public class UDPSocketService extends SocketService {
 
     @Override
     public void onDestroy() {
-        stopServer();
-        stopClient();
+        if (null != mServerSocket) {
+            mServerSocket.close();
+            mServerSocket = null;
+        }
+        if (null != mClientSocket) {
+            mClientSocket.close();
+            mClientSocket = null;
+        }
         super.onDestroy();
     }
 }
