@@ -53,7 +53,9 @@ public class UDPSocketService extends SocketService {
     public void startServer() {
         try {
             mServerTcpPort = mRandom.nextInt(65536) % (65536 - 1024) + 1024;
-            mServerSocket = new DatagramSocket();
+            if(null == mServerSocket) {
+                mServerSocket = new DatagramSocket();
+            }
             mServerDisposable = Observable.interval(5, TimeUnit.SECONDS).observeOn(Schedulers.io())
                     .subscribe(aLong -> {
                         if (!isWifiEnabled() || !isNetConnected()) {
@@ -83,7 +85,6 @@ public class UDPSocketService extends SocketService {
             new Thread(() -> {
                 mServerSocket.disconnect();
                 mServerSocket.close();
-                mServerSocket = null;
             }).start();
         }
         RxBus.getInstance().post(new SocketEvent("server is stopped"));
@@ -91,8 +92,11 @@ public class UDPSocketService extends SocketService {
 
     public void startClient() {
         try {
-            mClientSocket = new DatagramSocket(CLIENT_LISTENING_UDP_PORT);
-            mClientPacket = new DatagramPacket(mClientBuffer, mClientBuffer.length);
+            if (null == mClientSocket) {
+                mClientSocket = new DatagramSocket(CLIENT_LISTENING_UDP_PORT);
+                mClientSocket.setReuseAddress(true);
+                mClientPacket = new DatagramPacket(mClientBuffer, mClientBuffer.length);
+            }
             mClientDisposable = Observable.interval(1, TimeUnit.SECONDS)
                     .observeOn(Schedulers.io())
                     .subscribe(aLong -> {
@@ -125,7 +129,6 @@ public class UDPSocketService extends SocketService {
             new Thread(() -> {
                 mClientSocket.disconnect();
                 mClientSocket.close();
-                mClientSocket = null;
             });
         }
         RxBus.getInstance().post(new SocketEvent("client is stopped"));
