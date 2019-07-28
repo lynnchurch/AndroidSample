@@ -9,4 +9,9 @@
         android:id="@+id/client"
         android:title="@string/start_client"
         app:showAsAction="always" />
+    <item
+        android:id="@+id/session"
+        android:title="@string/end_session"
+        android:visible="false"
+        app:showAsAction="always" />
 </menu>
