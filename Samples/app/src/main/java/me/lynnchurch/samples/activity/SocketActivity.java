@@ -15,21 +15,25 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
+import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import me.lynnchurch.samples.R;
 import me.lynnchurch.samples.adapter.ServerListAdapter;
 import me.lynnchurch.samples.bean.NetAddress;
+import me.lynnchurch.samples.bean.ServerItem;
 import me.lynnchurch.samples.event.SocketEvent;
-import me.lynnchurch.samples.service.UDPSocketService;
+import me.lynnchurch.samples.service.LANSocketService;
 import me.lynnchurch.samples.utils.RxBus;
 
 public class SocketActivity extends BaseActivity {
-    private UDPSocketService mUDPSocketService;
+    private LANSocketService mLANSocketService;
     MenuItem mServerMenuItem;
     MenuItem mClientMenuItem;
     MenuItem mSessionMenuItem;
@@ -37,14 +41,15 @@ public class SocketActivity extends BaseActivity {
     TextView tvHint;
     @BindView(R.id.rvServerList)
     RecyclerView rvServerList;
-    private List<NetAddress> mServerList = new ArrayList<>();
+    private List<ServerItem> mServerList = new ArrayList<>();
     private ServerListAdapter mServerListAdapter = new ServerListAdapter(mServerList);
+    private Disposable mClearInvalidServerAddressDisposable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSupportActionBar().setTitle(getResources().getStringArray(R.array.titles)[3]);
-        bindService(new Intent(this, UDPSocketService.class), mServiceConnection, BIND_AUTO_CREATE);
+        bindService(new Intent(this, LANSocketService.class), mServiceConnection, BIND_AUTO_CREATE);
         init();
     }
 
@@ -56,7 +61,7 @@ public class SocketActivity extends BaseActivity {
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mUDPSocketService = ((UDPSocketService.SocketBinder) service).getService();
+            mLANSocketService = ((LANSocketService.SocketBinder) service).getService();
         }
 
         @Override
@@ -73,11 +78,19 @@ public class SocketActivity extends BaseActivity {
                         case SocketEvent.CODE_PLAIN:
                             tvHint.setText(socketEvent.msg);
                             break;
-                        case SocketEvent.CODE_TCP_S1ERVER_ADDRESS:
+                        case SocketEvent.CODE_TCP_SERVER_ADDRESS:
                             showServerList();
                             NetAddress netAddress = (NetAddress) socketEvent.data;
-                            if (!mServerList.contains(netAddress)) {
-                                mServerList.add(netAddress);
+                            ServerItem serverItem = new ServerItem(netAddress, System.currentTimeMillis());
+                            if (!mServerList.contains(serverItem)) {
+                                mServerList.add(0, serverItem);
+                            } else {
+                                for (int i = 0; i < mServerList.size(); i++) {
+                                    ServerItem serverItem1 = mServerList.get(i);
+                                    if (serverItem.equals(serverItem1)) {
+                                        mServerList.set(i, serverItem);
+                                    }
+                                }
                             }
                             mServerListAdapter.notifyDataSetChanged();
                             break;
@@ -85,8 +98,26 @@ public class SocketActivity extends BaseActivity {
                 });
 
         rvServerList.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
+        mServerListAdapter.setStartSessionListenner(netAddress -> {
+            mLANSocketService.sendHeartbeatPacket(netAddress.getIp(), netAddress.getPort());
+        });
         rvServerList.setAdapter(mServerListAdapter);
         rvServerList.addItemDecoration(new DividerItemDecoration(this, RecyclerView.VERTICAL));
+    }
+
+    private void clearInvalidServerAddress() {
+        mClearInvalidServerAddressDisposable = Observable.interval(3, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread())
+                .subscribe(aLong -> {
+                    Iterator<ServerItem> serverItemIterator = mServerList.iterator();
+                    while(serverItemIterator.hasNext()){
+                        ServerItem serverItem = serverItemIterator.next();
+                        if(System.currentTimeMillis() - serverItem.getFoundTime() > 6000) {
+                            serverItemIterator.remove();
+                            mServerListAdapter.notifyDataSetChanged();
+                            return;
+                        }
+                    }
+                });
     }
 
     @Override
@@ -105,25 +136,27 @@ public class SocketActivity extends BaseActivity {
                 if (item.getTitle().equals(getString(R.string.start_server))) {
                     item.setTitle(R.string.stop_server);
                     mClientMenuItem.setEnabled(false);
-                    mUDPSocketService.startServer();
-                    tvHint.setText("server is starting ...");
+                    mLANSocketService.startServer();
+                    tvHint.setText("server is running ...");
                 } else {
                     item.setTitle(R.string.start_server);
                     mClientMenuItem.setEnabled(true);
-                    mUDPSocketService.stopServer();
+                    mLANSocketService.stopServer();
                 }
                 break;
             case R.id.client:
                 if (item.getTitle().equals(getString(R.string.start_client))) {
                     item.setTitle(R.string.stop_client);
                     mServerMenuItem.setEnabled(false);
-                    mUDPSocketService.startClient();
-                    tvHint.setText("client is starting ...");
+                    mLANSocketService.startClient();
+                    clearInvalidServerAddress();
+                    tvHint.setText("client is running ...");
                 } else {
+                    mClearInvalidServerAddressDisposable.dispose();
                     showHint();
                     item.setTitle(R.string.start_client);
                     mServerMenuItem.setEnabled(true);
-                    mUDPSocketService.stopClient();
+                    mLANSocketService.stopClient();
                 }
                 break;
             default:
@@ -140,8 +173,8 @@ public class SocketActivity extends BaseActivity {
         }
     }
 
-    private void showHint(){
-        if(View.VISIBLE != tvHint.getVisibility()){
+    private void showHint() {
+        if (View.VISIBLE != tvHint.getVisibility()) {
             mServerList.clear();
             mServerListAdapter.notifyDataSetChanged();
             rvServerList.setVisibility(View.GONE);
