@@ -14,6 +14,8 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.gson.Gson;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -23,7 +25,6 @@ import butterknife.BindView;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
 import me.lynnchurch.samples.R;
 import me.lynnchurch.samples.adapter.ServerListAdapter;
 import me.lynnchurch.samples.bean.NetAddress;
@@ -80,7 +81,7 @@ public class SocketActivity extends BaseActivity {
                             break;
                         case SocketEvent.CODE_TCP_SERVER_ADDRESS:
                             showServerList();
-                            NetAddress netAddress = (NetAddress) socketEvent.data;
+                            NetAddress netAddress = new Gson().fromJson(socketEvent.data, NetAddress.class);
                             ServerItem serverItem = new ServerItem(netAddress, System.currentTimeMillis());
                             if (!mServerList.contains(serverItem)) {
                                 mServerList.add(0, serverItem);
@@ -99,7 +100,7 @@ public class SocketActivity extends BaseActivity {
 
         rvServerList.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
         mServerListAdapter.setStartSessionListenner(netAddress -> {
-            mLANSocketService.sendHeartbeatPacket(netAddress.getIp(), netAddress.getPort());
+            mLANSocketService.startTcpClient(netAddress.getIp(), netAddress.getPort());
         });
         rvServerList.setAdapter(mServerListAdapter);
         rvServerList.addItemDecoration(new DividerItemDecoration(this, RecyclerView.VERTICAL));
@@ -109,9 +110,9 @@ public class SocketActivity extends BaseActivity {
         mClearInvalidServerAddressDisposable = Observable.interval(3, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread())
                 .subscribe(aLong -> {
                     Iterator<ServerItem> serverItemIterator = mServerList.iterator();
-                    while(serverItemIterator.hasNext()){
+                    while (serverItemIterator.hasNext()) {
                         ServerItem serverItem = serverItemIterator.next();
-                        if(System.currentTimeMillis() - serverItem.getFoundTime() > 6000) {
+                        if (System.currentTimeMillis() - serverItem.getFoundTime() > 6000) {
                             serverItemIterator.remove();
                             mServerListAdapter.notifyDataSetChanged();
                             return;

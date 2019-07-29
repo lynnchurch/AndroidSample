@@ -3,10 +3,10 @@ package me.lynnchurch.samples.service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,15 +14,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Type;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -40,8 +37,6 @@ public class LANSocketService extends SocketService {
     public static final int CLIENT_UDP_BROADCAST_LISTENING_PORT = 6666;
     private static final int BUFFER_LENGTH = 1024;
     private static final String TAG = LANSocketService.class.getSimpleName();
-    private static final String HEARTBEAT_MSG = "heartbeat"; // 心跳消息
-    private static final String ALIVE_MSG = "alive"; // 活着的消息
     private byte[] mServerBuffer = new byte[BUFFER_LENGTH];
     private DatagramSocket mServerUdpSocket; // 服务端UDP Socket
     private DatagramPacket mServerUdpPacket;
@@ -55,13 +50,19 @@ public class LANSocketService extends SocketService {
     private ServerSocket mServerTcpSocket;
     private boolean mIsServerRunning = false; // Server 是否还在运行
     private ExecutorService mServerTaskThreadPool;
-    private Disposable mHeartbeatDisposable;
-    private Type mSocketEventNetAddressType = new TypeToken<SocketEvent<NetAddress>>() {
-    }.getType();
+    private boolean mIsClientRunning; // Client 是否还在运行
+    private Socket mClientTcpSocket; // 用于心跳检测的Socket
+    private OutputStream mClientTcpOutputStream;
+    private PrintWriter mClientTcpPrintWriter;
+    private InputStream mClientTcpInputStream;
+    private InputStreamReader mClientTcpInputStreamReader;
+    private BufferedReader mClientTcpBufferedReader;
+    private long mLastReceivedHeartbeatResponseTime; // 最近收到心跳响应的时间
 
     @Override
     public void onCreate() {
         super.onCreate();
+        mServerTcpPort = mRandom.nextInt(65536) % (65536 - 1024) + 1024;
     }
 
     @Override
@@ -82,7 +83,6 @@ public class LANSocketService extends SocketService {
     }
 
     private void sendUdpBroadcast() {
-        mServerTcpPort = mRandom.nextInt(65536) % (65536 - 1024) + 1024;
         try {
             mServerUdpPacket = new DatagramPacket(mServerBuffer, mServerBuffer.length, InetAddress.getByName(getBroadcastIP()), CLIENT_UDP_BROADCAST_LISTENING_PORT);
         } catch (UnknownHostException e) {
@@ -99,7 +99,7 @@ public class LANSocketService extends SocketService {
 
                     mServerUdpSocket = new DatagramSocket();
                     NetAddress netAddress = new NetAddress(getLocalIP(), mServerTcpPort);
-                    SocketEvent<NetAddress> socketEvent = new SocketEvent<>(SocketEvent.CODE_TCP_SERVER_ADDRESS, "tcp server address", netAddress);
+                    SocketEvent socketEvent = new SocketEvent(SocketEvent.CODE_TCP_SERVER_ADDRESS, "tcp server address", new Gson().toJson(netAddress));
                     mServerUdpPacket.setData(new Gson().toJson(socketEvent).getBytes());
                     mServerUdpSocket.send(mServerUdpPacket);
                     Log.i(TAG, "server is broadcasting by udp ...");
@@ -123,6 +123,7 @@ public class LANSocketService extends SocketService {
     }
 
     public void startClient() {
+        mIsClientRunning = true;
         receiveUdpBroadcast();
     }
 
@@ -140,14 +141,14 @@ public class LANSocketService extends SocketService {
                     mClientUdpSocket.receive(mClientUdpPacket);
                     String receiveData = new String(mClientUdpPacket.getData(), mClientUdpPacket.getOffset(), mClientUdpPacket.getLength());
 
-                    SocketEvent<NetAddress> socketEvent = new Gson().fromJson(receiveData, mSocketEventNetAddressType);
+                    SocketEvent socketEvent = new Gson().fromJson(receiveData, SocketEvent.class);
 
                     SocketAddress socketAddress = mClientUdpPacket.getSocketAddress();
-                    Log.i(TAG, "socketAddress：" + socketAddress);
+                    Log.i(TAG, "server udp socketAddress：" + socketAddress);
 
-                    String msg = new StringBuilder("received packetData:\n").append(receiveData).append("\nfrom：" + socketAddress).toString();
+                    String msg = new StringBuilder("udp received packetData:\n").append(receiveData).append("\nfrom：" + socketAddress).toString();
                     Log.i(TAG, msg);
-                    if (!mReceiveUdpBroadcastDisposable.isDisposed()) {
+                    if (null != socketEvent && !mReceiveUdpBroadcastDisposable.isDisposed()) {
                         RxBus.getInstance().post(socketEvent);
                     }
                     mClientUdpSocket.close();
@@ -162,7 +163,7 @@ public class LANSocketService extends SocketService {
         if (null != mReceiveUdpBroadcastDisposable) {
             mReceiveUdpBroadcastDisposable.dispose();
         }
-        stopHeartbeat();
+        mIsClientRunning = false;
         RxBus.getInstance().post(new SocketEvent("client is stopped"));
     }
 
@@ -176,9 +177,8 @@ public class LANSocketService extends SocketService {
         new Thread(() -> {
             try {
                 if (null == mServerTcpSocket) {
-                    mServerTcpSocket = new ServerSocket();
+                    mServerTcpSocket = new ServerSocket(mServerTcpPort);
                 }
-                mServerTcpSocket.bind(new InetSocketAddress(mServerTcpPort));
                 Log.i(TAG, "tcp server is running ...");
                 Socket clientSocket;
                 if (null == mServerTaskThreadPool) {
@@ -213,23 +213,18 @@ public class LANSocketService extends SocketService {
                 is = mSocket.getInputStream();
                 isr = new InputStreamReader(is);
                 br = new BufferedReader(isr);
-                String data;
-                StringBuilder dataSB = new StringBuilder();
-                while ((data = br.readLine()) != null) {
-                    dataSB.append(data);
-                }
-                data = dataSB.toString();
-                Log.i(TAG, "server received data:\n" + data);
-                mSocket.shutdownInput();
 
                 os = mSocket.getOutputStream();
                 pw = new PrintWriter(os);
-                if (HEARTBEAT_MSG.equals(data)) {
-                    pw.write(ALIVE_MSG);
-                } else {
-                    pw.write("response from server");
+
+                while (mIsServerRunning) {
+                    String data = br.readLine();
+                    Log.i(TAG, "server received tcp data：" + data);
+                    SocketEvent socketEvent = new Gson().fromJson(data, SocketEvent.class);
+                    if (null != socketEvent && socketEvent.code == SocketEvent.CODE_TCP_HEARTBEAT) {
+                        sendHeartbeatResponse(pw);
+                    }
                 }
-                pw.flush();
             } catch (IOException e) {
                 Log.e(TAG, e.getMessage(), e);
             } finally {
@@ -259,47 +254,84 @@ public class LANSocketService extends SocketService {
         }
     }
 
-    public void sendHeartbeatPacket(String serverIp, int serverPort) {
-        mHeartbeatDisposable = Observable.interval(5, TimeUnit.SECONDS).observeOn(Schedulers.newThread())
-                .subscribe(aLong -> {
-                    Socket socket = new Socket();
-                    SocketAddress socketAddress = new InetSocketAddress(serverIp, serverPort);
-                    socket.connect(socketAddress, 5000); // 心跳超时为5秒
-                    Log.i(TAG, "set socket timeout.........................");
-                    OutputStream os = socket.getOutputStream();
-                    PrintWriter pw = new PrintWriter(os);
-
-                    pw.write(HEARTBEAT_MSG);
-                    pw.flush();
-                    socket.shutdownOutput();
-
-                    InputStream is = socket.getInputStream();
-                    InputStreamReader isr = new InputStreamReader(is);
-                    BufferedReader br = new BufferedReader(isr);
-
-                    String data;
-                    StringBuilder dataSB = new StringBuilder();
-                    while ((data = br.readLine()) != null) {
-                        dataSB.append(data);
-                    }
-
-                    Log.i(TAG, "heartbeat received data:\n" + dataSB.toString());
-
-                    os.close();
-                    pw.close();
-                    is.close();
-                    isr.close();
-                    br.close();
-                }, throwable -> {
-                    Log.e(TAG, throwable.getMessage(), throwable);
-                }, () -> {
-                });
+    private void sendHeartbeatResponse(PrintWriter printWriter) {
+        SocketEvent socketEvent = new SocketEvent(SocketEvent.CODE_TCP_SERVER_ALIVE, null, null);
+        printWriter.println(new Gson().toJson(socketEvent));
+        printWriter.flush();
     }
 
-    private void stopHeartbeat() {
-        if (null != mHeartbeatDisposable) {
-            mHeartbeatDisposable.dispose();
-        }
+    public void startTcpClient(String serverIp, int serverPort) {
+        new Thread(() -> {
+            try {
+                mClientTcpSocket = new Socket(serverIp, serverPort);
+
+                mClientTcpOutputStream = mClientTcpSocket.getOutputStream();
+                mClientTcpPrintWriter = new PrintWriter(mClientTcpOutputStream);
+
+                mClientTcpInputStream = mClientTcpSocket.getInputStream();
+                mClientTcpInputStreamReader = new InputStreamReader(mClientTcpInputStream);
+                mClientTcpBufferedReader = new BufferedReader(mClientTcpInputStreamReader);
+
+                handleReceivedTcpData();
+                while (mIsClientRunning) {
+                    sendHeartbeatMsg();
+                    if (0 == mLastReceivedHeartbeatResponseTime) {
+                        mLastReceivedHeartbeatResponseTime = System.currentTimeMillis();
+                    }
+                    // 超过7秒还未收到服务器的心跳响应则认为服务器已挂
+                    if (System.currentTimeMillis() - mLastReceivedHeartbeatResponseTime > 7000) {
+                        mIsClientRunning = false;
+                        Log.i(TAG, "server is dead");
+                    }
+                    SystemClock.sleep(5000);
+                }
+                if (null != mClientTcpSocket) {
+                    mClientTcpSocket.close();
+                }
+                if (null != mClientTcpOutputStream) {
+                    mClientTcpOutputStream.close();
+                }
+                if (null != mClientTcpPrintWriter) {
+                    mClientTcpPrintWriter.close();
+                }
+                if (null != mClientTcpInputStream) {
+                    mClientTcpInputStream.close();
+                }
+                if (null != mClientTcpInputStreamReader) {
+                    mClientTcpInputStreamReader.close();
+                }
+                if (null != mClientTcpBufferedReader) {
+                    mClientTcpBufferedReader.close();
+                }
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage(), e);
+                mIsClientRunning = false;
+            }
+        }).start();
+    }
+
+    private void handleReceivedTcpData() {
+        new Thread(() -> {
+            while (mIsClientRunning) {
+                try {
+                    String data = mClientTcpBufferedReader.readLine();
+                    Log.i(TAG, "client received tcp data：" + data);
+                    SocketEvent socketEvent = new Gson().fromJson(data, SocketEvent.class);
+                    // 更新最近收到心跳响应的时间
+                    if (null != socketEvent && socketEvent.code == SocketEvent.CODE_TCP_SERVER_ALIVE) {
+                        mLastReceivedHeartbeatResponseTime = System.currentTimeMillis();
+                    }
+                } catch (IOException e) {
+                    Log.e(TAG, e.getMessage(), e);
+                }
+            }
+        }).start();
+    }
+
+    private void sendHeartbeatMsg() {
+        SocketEvent socketEvent = new SocketEvent(SocketEvent.CODE_TCP_HEARTBEAT, null, null);
+        mClientTcpPrintWriter.println(new Gson().toJson(socketEvent));
+        mClientTcpPrintWriter.flush();
     }
 
     @Override
