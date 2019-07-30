@@ -102,7 +102,7 @@
             android:permission="lynnchurch.permission.MESSENGER"
             android:process=":messenger" />
         <service
-            android:name=".service.LANSocketService"
+            android:name=".service.LanSocketService"
             android:enabled="true"
             android:exported="false" />
     </application>

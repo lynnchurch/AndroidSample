@@ -30,11 +30,11 @@ import me.lynnchurch.samples.adapter.ServerListAdapter;
 import me.lynnchurch.samples.bean.NetAddress;
 import me.lynnchurch.samples.bean.ServerItem;
 import me.lynnchurch.samples.event.SocketEvent;
-import me.lynnchurch.samples.service.LANSocketService;
+import me.lynnchurch.samples.service.LanSocketService;
 import me.lynnchurch.samples.utils.RxBus;
 
 public class SocketActivity extends BaseActivity {
-    private LANSocketService mLANSocketService;
+    private LanSocketService mLanSocketService;
     MenuItem mServerMenuItem;
     MenuItem mClientMenuItem;
     MenuItem mSessionMenuItem;
@@ -50,7 +50,7 @@ public class SocketActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSupportActionBar().setTitle(getResources().getStringArray(R.array.titles)[3]);
-        bindService(new Intent(this, LANSocketService.class), mServiceConnection, BIND_AUTO_CREATE);
+        bindService(new Intent(this, LanSocketService.class), mServiceConnection, BIND_AUTO_CREATE);
         init();
     }
 
@@ -62,7 +62,7 @@ public class SocketActivity extends BaseActivity {
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mLANSocketService = ((LANSocketService.SocketBinder) service).getService();
+            mLanSocketService = ((LanSocketService.SocketBinder) service).getService();
         }
 
         @Override
@@ -81,7 +81,7 @@ public class SocketActivity extends BaseActivity {
                             break;
                         case SocketEvent.CODE_TCP_SERVER_ADDRESS:
                             showServerList();
-                            NetAddress netAddress = new Gson().fromJson(socketEvent.data, NetAddress.class);
+                            NetAddress netAddress = new Gson().fromJson(new String(socketEvent.data), NetAddress.class);
                             ServerItem serverItem = new ServerItem(netAddress, System.currentTimeMillis());
                             if (!mServerList.contains(serverItem)) {
                                 mServerList.add(0, serverItem);
@@ -100,7 +100,7 @@ public class SocketActivity extends BaseActivity {
 
         rvServerList.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
         mServerListAdapter.setStartSessionListenner(netAddress -> {
-            mLANSocketService.startTcpClient(netAddress.getIp(), netAddress.getPort());
+            mLanSocketService.startTcpClient(netAddress.getIp(), netAddress.getPort());
         });
         rvServerList.setAdapter(mServerListAdapter);
         rvServerList.addItemDecoration(new DividerItemDecoration(this, RecyclerView.VERTICAL));
@@ -137,19 +137,19 @@ public class SocketActivity extends BaseActivity {
                 if (item.getTitle().equals(getString(R.string.start_server))) {
                     item.setTitle(R.string.stop_server);
                     mClientMenuItem.setEnabled(false);
-                    mLANSocketService.startServer();
+                    mLanSocketService.startServer();
                     tvHint.setText("server is running ...");
                 } else {
                     item.setTitle(R.string.start_server);
                     mClientMenuItem.setEnabled(true);
-                    mLANSocketService.stopServer();
+                    mLanSocketService.stopServer();
                 }
                 break;
             case R.id.client:
                 if (item.getTitle().equals(getString(R.string.start_client))) {
                     item.setTitle(R.string.stop_client);
                     mServerMenuItem.setEnabled(false);
-                    mLANSocketService.startClient();
+                    mLanSocketService.startClient();
                     clearInvalidServerAddress();
                     tvHint.setText("client is running ...");
                 } else {
@@ -157,7 +157,7 @@ public class SocketActivity extends BaseActivity {
                     showHint();
                     item.setTitle(R.string.start_client);
                     mServerMenuItem.setEnabled(true);
-                    mLANSocketService.stopClient();
+                    mLanSocketService.stopClient();
                 }
                 break;
             default:

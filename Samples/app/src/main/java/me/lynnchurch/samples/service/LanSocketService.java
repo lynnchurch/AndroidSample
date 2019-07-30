@@ -21,6 +21,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,10 +36,10 @@ import me.lynnchurch.samples.bean.NetAddress;
 import me.lynnchurch.samples.event.SocketEvent;
 import me.lynnchurch.samples.utils.RxBus;
 
-public class LANSocketService extends SocketService {
+public class LanSocketService extends SocketService {
     public static final int CLIENT_UDP_BROADCAST_LISTENING_PORT = 6666;
     private static final int BUFFER_LENGTH = 1024;
-    private static final String TAG = LANSocketService.class.getSimpleName();
+    private static final String TAG = LanSocketService.class.getSimpleName();
     private byte[] mServerBuffer = new byte[BUFFER_LENGTH];
     private DatagramSocket mServerUdpSocket; // 服务端UDP Socket
     private DatagramPacket mServerUdpPacket;
@@ -50,6 +53,10 @@ public class LANSocketService extends SocketService {
     private ServerSocket mServerTcpSocket;
     private boolean mIsServerRunning = false; // Server 是否还在运行
     private ExecutorService mServerTaskThreadPool;
+    private Map<NetAddress, Boolean> mClientStatusMap = new HashMap<>(); // 客户端状态（true已连接，false已断开连接）
+    private Map<NetAddress, BufferedReader> mClientBufferedReaderMap = new HashMap<>(); // 用于接收客户端数据的输入流
+    private Map<NetAddress, PrintWriter> mClientPrintWriterMap = new HashMap<>(); // 用于向客户端发送数据的输出流
+    private Map<NetAddress, Long> mClientHeartbeatResponseTimeMap = new HashMap<>(); // 服务器最近收到心跳响应的时间
     private boolean mIsClientRunning; // Client 是否还在运行
     private Socket mClientTcpSocket; // 用于心跳检测的Socket
     private OutputStream mClientTcpOutputStream;
@@ -57,7 +64,7 @@ public class LANSocketService extends SocketService {
     private InputStream mClientTcpInputStream;
     private InputStreamReader mClientTcpInputStreamReader;
     private BufferedReader mClientTcpBufferedReader;
-    private long mLastReceivedHeartbeatResponseTime; // 最近收到心跳响应的时间
+    private long mClientLastReceivedHeartbeatResponseTime; // 客户端最近收到心跳响应的时间
 
     @Override
     public void onCreate() {
@@ -71,17 +78,23 @@ public class LANSocketService extends SocketService {
     }
 
     public class SocketBinder extends Binder {
-        public LANSocketService getService() {
-            return LANSocketService.this;
+        public LanSocketService getService() {
+            return LanSocketService.this;
         }
     }
 
+    /**
+     * 启动服务器
+     */
     public void startServer() {
         mIsServerRunning = true;
         sendUdpBroadcast();
         startTcpServer();
     }
 
+    /**
+     * 发送UDP广播
+     */
     private void sendUdpBroadcast() {
         try {
             mServerUdpPacket = new DatagramPacket(mServerBuffer, mServerBuffer.length, InetAddress.getByName(getBroadcastIP()), CLIENT_UDP_BROADCAST_LISTENING_PORT);
@@ -99,10 +112,10 @@ public class LANSocketService extends SocketService {
 
                     mServerUdpSocket = new DatagramSocket();
                     NetAddress netAddress = new NetAddress(getLocalIP(), mServerTcpPort);
-                    SocketEvent socketEvent = new SocketEvent(SocketEvent.CODE_TCP_SERVER_ADDRESS, "tcp server address", new Gson().toJson(netAddress));
+                    SocketEvent socketEvent = new SocketEvent(SocketEvent.CODE_TCP_SERVER_ADDRESS, "tcp server address", new Gson().toJson(netAddress).getBytes());
                     mServerUdpPacket.setData(new Gson().toJson(socketEvent).getBytes());
                     mServerUdpSocket.send(mServerUdpPacket);
-                    Log.i(TAG, "server is broadcasting by udp ...");
+//                    Log.i(TAG, "server is broadcasting by udp ...");
                     if (!mSendUdpBroadcastDisposable.isDisposed()) {
                         RxBus.getInstance().post(new SocketEvent("server is broadcasting by udp ..."));
                     }
@@ -114,19 +127,10 @@ public class LANSocketService extends SocketService {
                 });
     }
 
-    public void stopServer() {
-        mIsServerRunning = false;
-        if (null != mSendUdpBroadcastDisposable) {
-            mSendUdpBroadcastDisposable.dispose();
-        }
-        RxBus.getInstance().post(new SocketEvent("server is stopped"));
-    }
 
-    public void startClient() {
-        mIsClientRunning = true;
-        receiveUdpBroadcast();
-    }
-
+    /**
+     * 接收服务器的UDP广播
+     */
     private void receiveUdpBroadcast() {
         mClientUdpPacket = new DatagramPacket(mClientUdpBuffer, mClientUdpBuffer.length);
         mReceiveUdpBroadcastDisposable = Observable.interval(1, TimeUnit.SECONDS)
@@ -144,10 +148,10 @@ public class LANSocketService extends SocketService {
                     SocketEvent socketEvent = new Gson().fromJson(receiveData, SocketEvent.class);
 
                     SocketAddress socketAddress = mClientUdpPacket.getSocketAddress();
-                    Log.i(TAG, "server udp socketAddress：" + socketAddress);
+//                    Log.i(TAG, "server udp socketAddress：" + socketAddress);
 
                     String msg = new StringBuilder("udp received packetData:\n").append(receiveData).append("\nfrom：" + socketAddress).toString();
-                    Log.i(TAG, msg);
+//                    Log.i(TAG, msg);
                     if (null != socketEvent && !mReceiveUdpBroadcastDisposable.isDisposed()) {
                         RxBus.getInstance().post(socketEvent);
                     }
@@ -159,20 +163,40 @@ public class LANSocketService extends SocketService {
                 });
     }
 
+    /**
+     * 启动客户端
+     */
+    public void startClient() {
+        mIsClientRunning = true;
+        receiveUdpBroadcast();
+    }
+
+    /**
+     * 停止客户端
+     */
     public void stopClient() {
         if (null != mReceiveUdpBroadcastDisposable) {
             mReceiveUdpBroadcastDisposable.dispose();
         }
+        mClientLastReceivedHeartbeatResponseTime = 0;
         mIsClientRunning = false;
         RxBus.getInstance().post(new SocketEvent("client is stopped"));
     }
 
+    /**
+     * 获取广播地址
+     *
+     * @return
+     */
     protected String getBroadcastIP() {
         String ip = getLocalIP();
         ip = ip.substring(0, ip.lastIndexOf(".")) + ".255";
         return ip;
     }
 
+    /**
+     * 启动TCP服务器
+     */
     private void startTcpServer() {
         new Thread(() -> {
             try {
@@ -186,8 +210,7 @@ public class LANSocketService extends SocketService {
                 }
                 while (mIsServerRunning) {
                     clientSocket = mServerTcpSocket.accept();
-                    mServerTaskThreadPool.submit(new ServerTask(clientSocket));
-                    Log.i(TAG, "client ip：" + clientSocket.getInetAddress().getHostAddress());
+                    mServerTaskThreadPool.submit(new ServerCommunicationTask(clientSocket));
                 }
             } catch (IOException e) {
                 Log.e(TAG, e.getMessage(), e);
@@ -195,15 +218,38 @@ public class LANSocketService extends SocketService {
         }).start();
     }
 
-    private class ServerTask implements Runnable {
+    /**
+     * 停止服务器
+     */
+    public void stopServer() {
+        mIsServerRunning = false;
+        if (null != mSendUdpBroadcastDisposable) {
+            mSendUdpBroadcastDisposable.dispose();
+        }
+        if (null != mServerTaskThreadPool) {
+            mServerTaskThreadPool.shutdown();
+        }
+        RxBus.getInstance().post(new SocketEvent("server is stopped"));
+    }
+
+    /**
+     * 用来与已建立连接的客户端进行通讯
+     */
+    private class ServerCommunicationTask implements Runnable {
         private Socket mSocket;
 
-        public ServerTask(Socket socket) {
+        public ServerCommunicationTask(Socket socket) {
             mSocket = socket;
         }
 
         @Override
         public void run() {
+            String clientAddress = mSocket.getInetAddress().getHostAddress();
+            Log.i(TAG, "new client connected：" + clientAddress);
+            NetAddress clientNetAddress = new NetAddress(clientAddress, mSocket.getPort());
+            SocketEvent socketEvent = new SocketEvent(SocketEvent.CODE_TCP_NEW_CLIENT_CONNECTED, null, new Gson().toJson(clientNetAddress).getBytes());
+            RxBus.getInstance().post(socketEvent);
+
             InputStream is = null;
             InputStreamReader isr = null;
             BufferedReader br = null;
@@ -217,13 +263,29 @@ public class LANSocketService extends SocketService {
                 os = mSocket.getOutputStream();
                 pw = new PrintWriter(os);
 
-                while (mIsServerRunning) {
+                mClientStatusMap.put(clientNetAddress, true);
+                mClientBufferedReaderMap.put(clientNetAddress, br);
+                mClientPrintWriterMap.put(clientNetAddress, pw);
+
+                serverSendHeartbeatMsg(clientNetAddress);
+
+                while (mIsServerRunning && mClientStatusMap.get(clientNetAddress)) {
                     String data = br.readLine();
                     Log.i(TAG, "server received tcp data：" + data);
-                    SocketEvent socketEvent = new Gson().fromJson(data, SocketEvent.class);
-                    if (null != socketEvent && socketEvent.code == SocketEvent.CODE_TCP_HEARTBEAT) {
-                        sendHeartbeatResponse(pw);
+                    SocketEvent socketEvent1 = new Gson().fromJson(data, SocketEvent.class);
+                    Log.i(TAG, "socketEvent1:" + socketEvent1);
+                    if (null != socketEvent1) {
+                        // 更新最近收到心跳响应的时间
+                        mClientHeartbeatResponseTimeMap.put(clientNetAddress, System.currentTimeMillis());
+                        switch (socketEvent1.code) {
+                            case SocketEvent.CODE_TCP_HEARTBEAT:
+                                serverSendHeartbeatResponse(pw);
+                                break;
+                            case SocketEvent.CODE_TCP_CLIENT_ALIVE:
+                            default:
+                        }
                     }
+                    checkClientAlive(clientNetAddress);
                 }
             } catch (IOException e) {
                 Log.e(TAG, e.getMessage(), e);
@@ -254,12 +316,67 @@ public class LANSocketService extends SocketService {
         }
     }
 
-    private void sendHeartbeatResponse(PrintWriter printWriter) {
+    /**
+     * 检查客户端是否还活着
+     *
+     * @param netAddress
+     */
+    private void checkClientAlive(NetAddress netAddress) {
+        Log.i(TAG, "checkClientAlive");
+        Long serverLastReceivedHeartbeatResponseTime = mClientHeartbeatResponseTimeMap.get(netAddress);
+        if (null == serverLastReceivedHeartbeatResponseTime) {
+            serverLastReceivedHeartbeatResponseTime = System.currentTimeMillis();
+            mClientHeartbeatResponseTimeMap.put(netAddress, serverLastReceivedHeartbeatResponseTime);
+        }
+        // 超过1秒还未收到客户端的心跳响应则认为客户端已挂
+        long timeout = System.currentTimeMillis() - serverLastReceivedHeartbeatResponseTime;
+        Log.i(TAG, "timeout:" + timeout);
+        if (timeout > 1000) {
+            mClientStatusMap.put(netAddress, false);
+            mClientPrintWriterMap.remove(netAddress);
+            mClientBufferedReaderMap.remove(netAddress);
+            mClientHeartbeatResponseTimeMap.remove(netAddress);
+            RxBus.getInstance().post(new SocketEvent(SocketEvent.CODE_TCP_CLIENT_DEAD, null, null));
+            Log.i(TAG, "client:" + netAddress + " is dead");
+        }
+    }
+
+    /**
+     * 服务端发送心跳消息
+     *
+     * @param netAddress 接收心跳消息的客户端
+     */
+    private void serverSendHeartbeatMsg(NetAddress netAddress) {
+        mServerTaskThreadPool.submit(() -> {
+            while (mIsServerRunning && mClientStatusMap.get(netAddress)) {
+                SocketEvent socketEvent = new SocketEvent(SocketEvent.CODE_TCP_HEARTBEAT, null, null);
+                PrintWriter printWriter = mClientPrintWriterMap.get(netAddress);
+                printWriter.println(new Gson().toJson(socketEvent));
+                printWriter.flush();
+                Log.i(TAG, "serverSendHeartbeatMsg");
+                SystemClock.sleep(5000);
+            }
+        });
+    }
+
+    /**
+     * 服务器发送客户端心跳检测的响应
+     *
+     * @param printWriter
+     */
+    private void serverSendHeartbeatResponse(PrintWriter printWriter) {
         SocketEvent socketEvent = new SocketEvent(SocketEvent.CODE_TCP_SERVER_ALIVE, null, null);
         printWriter.println(new Gson().toJson(socketEvent));
         printWriter.flush();
+        Log.i(TAG, "serverSendHeartbeatResponse");
     }
 
+    /**
+     * 启动TCP客户端
+     *
+     * @param serverIp
+     * @param serverPort
+     */
     public void startTcpClient(String serverIp, int serverPort) {
         new Thread(() -> {
             try {
@@ -272,17 +389,9 @@ public class LANSocketService extends SocketService {
                 mClientTcpInputStreamReader = new InputStreamReader(mClientTcpInputStream);
                 mClientTcpBufferedReader = new BufferedReader(mClientTcpInputStreamReader);
 
-                handleReceivedTcpData();
+                clientHandleReceivedTcpData();
                 while (mIsClientRunning) {
-                    sendHeartbeatMsg();
-                    if (0 == mLastReceivedHeartbeatResponseTime) {
-                        mLastReceivedHeartbeatResponseTime = System.currentTimeMillis();
-                    }
-                    // 超过7秒还未收到服务器的心跳响应则认为服务器已挂
-                    if (System.currentTimeMillis() - mLastReceivedHeartbeatResponseTime > 7000) {
-                        mIsClientRunning = false;
-                        Log.i(TAG, "server is dead");
-                    }
+                    clientSendHeartbeatMsg();
                     SystemClock.sleep(5000);
                 }
                 if (null != mClientTcpSocket) {
@@ -310,17 +419,56 @@ public class LANSocketService extends SocketService {
         }).start();
     }
 
-    private void handleReceivedTcpData() {
+    /**
+     * 检查服务器是否还活着
+     */
+    private void checkServerAlive() {
+        if (0 == mClientLastReceivedHeartbeatResponseTime) {
+            mClientLastReceivedHeartbeatResponseTime = System.currentTimeMillis();
+        }
+        // 超过1秒还未收到服务器的心跳响应则认为服务器已挂
+        long timeout = System.currentTimeMillis() - mClientLastReceivedHeartbeatResponseTime;
+        Log.i(TAG, "timeout:" + timeout);
+        if (timeout > 1000) {
+            mIsClientRunning = false;
+            SocketEvent socketEvent = new SocketEvent(SocketEvent.CODE_TCP_SERVER_DEAD, null, null);
+            RxBus.getInstance().post(socketEvent);
+            Log.i(TAG, "server is dead");
+        }
+    }
+
+    /**
+     * 客户端发送心跳消息
+     */
+    private void clientSendHeartbeatMsg() {
+        SocketEvent socketEvent = new SocketEvent(SocketEvent.CODE_TCP_HEARTBEAT, null, null);
+        mClientTcpPrintWriter.println(new Gson().toJson(socketEvent));
+        mClientTcpPrintWriter.flush();
+        Log.i(TAG, "clientSendHeartbeatMsg");
+    }
+
+    /**
+     * 客户端对接收的TCP数据进行处理
+     */
+    private void clientHandleReceivedTcpData() {
         new Thread(() -> {
             while (mIsClientRunning) {
                 try {
                     String data = mClientTcpBufferedReader.readLine();
                     Log.i(TAG, "client received tcp data：" + data);
                     SocketEvent socketEvent = new Gson().fromJson(data, SocketEvent.class);
-                    // 更新最近收到心跳响应的时间
-                    if (null != socketEvent && socketEvent.code == SocketEvent.CODE_TCP_SERVER_ALIVE) {
-                        mLastReceivedHeartbeatResponseTime = System.currentTimeMillis();
+                    if (null != socketEvent) {
+                        // 更新最近收到心跳响应的时间
+                        mClientLastReceivedHeartbeatResponseTime = System.currentTimeMillis();
+                        switch (socketEvent.code) {
+                            case SocketEvent.CODE_TCP_SERVER_ALIVE:
+                                break;
+                            case SocketEvent.CODE_TCP_HEARTBEAT:
+                                clientSendHeartbeatResponse();
+                            default:
+                        }
                     }
+                    checkServerAlive();
                 } catch (IOException e) {
                     Log.e(TAG, e.getMessage(), e);
                 }
@@ -328,10 +476,14 @@ public class LANSocketService extends SocketService {
         }).start();
     }
 
-    private void sendHeartbeatMsg() {
-        SocketEvent socketEvent = new SocketEvent(SocketEvent.CODE_TCP_HEARTBEAT, null, null);
+    /**
+     * 客户端发送服务器心跳检测的响应
+     */
+    private void clientSendHeartbeatResponse() {
+        SocketEvent socketEvent = new SocketEvent(SocketEvent.CODE_TCP_CLIENT_ALIVE, null, null);
         mClientTcpPrintWriter.println(new Gson().toJson(socketEvent));
         mClientTcpPrintWriter.flush();
+        Log.i(TAG, "clientSendHeartbeatResponse");
     }
 
     @Override
