@@ -21,6 +21,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,13 +46,11 @@ public class LanSocketService extends SocketService {
     private static final int BUFFER_LENGTH = 1024;
     private static final String TAG = LanSocketService.class.getSimpleName();
     private byte[] mServerBuffer = new byte[BUFFER_LENGTH];
-    private DatagramSocket mServerUdpSocket; // 服务端UDP Socket
     private DatagramPacket mServerUdpPacket;
     private Disposable mSendUdpBroadcastDisposable;
-    private DatagramSocket mClientUdpSocket; // 客户端UDP Socket
     private DatagramPacket mClientUdpPacket;
+    private DatagramSocket mClientUdpSocket; // 客户端UDP Socket
     private byte[] mClientUdpBuffer = new byte[BUFFER_LENGTH];
-    private Disposable mReceiveUdpBroadcastDisposable;
     private Random mRandom = new Random(); // 用来生成TCP通信的端口号
     private int mServerTcpPort; // 服务端监听的端口
     private ServerSocket mServerTcpSocket;
@@ -117,19 +116,18 @@ public class LanSocketService extends SocketService {
                         return;
                     }
 
-                    mServerUdpSocket = new DatagramSocket();
+                    DatagramSocket datagramSocket = new DatagramSocket();
                     NetAddress netAddress = new NetAddress(getLocalIP(), mServerTcpPort);
                     SocketEvent socketEvent = new SocketEvent(SocketEvent.CODE_TCP_SERVER_ADDRESS, "tcp server address", new Gson().toJson(netAddress).getBytes());
                     mServerUdpPacket.setData(new Gson().toJson(socketEvent).getBytes());
-                    mServerUdpSocket.send(mServerUdpPacket);
-//                    Log.i(TAG, "server is broadcasting by udp ...");
+                    datagramSocket.send(mServerUdpPacket);
+                    Log.i(TAG, "server is broadcasting by udp ...");
                     if (!mSendUdpBroadcastDisposable.isDisposed()) {
                         RxBus.getInstance().post(new SocketEvent("server is broadcasting by udp ..."));
                     }
-                    mServerUdpSocket.close();
+                    datagramSocket.close();
                 }, throwable -> {
                     Log.e(TAG, throwable.getMessage(), throwable);
-                    mServerUdpSocket.close();
                 }, () -> {
                 });
     }
@@ -140,34 +138,39 @@ public class LanSocketService extends SocketService {
      */
     private void receiveUdpBroadcast() {
         mClientUdpPacket = new DatagramPacket(mClientUdpBuffer, mClientUdpBuffer.length);
-        mReceiveUdpBroadcastDisposable = Observable.interval(1, TimeUnit.SECONDS)
-                .observeOn(Schedulers.newThread())
-                .subscribe(aLong -> {
-                    if (!isWifiEnabled() || !isNetConnected()) {
-                        Log.i(TAG, "is waiting network available ...");
-                        RxBus.getInstance().post(new SocketEvent("is waiting network available ..."));
-                        return;
-                    }
+        new Thread(() -> {
+            try {
+                if (null == mClientUdpSocket) {
                     mClientUdpSocket = new DatagramSocket(CLIENT_UDP_BROADCAST_LISTENING_PORT);
+                }
+            } catch (SocketException e) {
+                Log.e(TAG, e.getMessage(), e);
+                return;
+            }
+            while (mIsClientRunning) {
+                if (!isWifiEnabled() || !isNetConnected()) {
+                    Log.i(TAG, "is waiting network available ...");
+                    RxBus.getInstance().post(new SocketEvent("is waiting network available ..."));
+                    return;
+                }
+                try {
                     mClientUdpSocket.receive(mClientUdpPacket);
-                    String receiveData = new String(mClientUdpPacket.getData(), mClientUdpPacket.getOffset(), mClientUdpPacket.getLength());
+                } catch (IOException e) {
+                    Log.e(TAG, e.getMessage(), e);
+                }
+                String receiveData = new String(mClientUdpPacket.getData(), mClientUdpPacket.getOffset(), mClientUdpPacket.getLength());
 
-                    SocketEvent socketEvent = new Gson().fromJson(receiveData, SocketEvent.class);
+                SocketAddress socketAddress = mClientUdpPacket.getSocketAddress();
+                Log.i(TAG, "server udp socketAddress：" + socketAddress);
 
-                    SocketAddress socketAddress = mClientUdpPacket.getSocketAddress();
-//                    Log.i(TAG, "server udp socketAddress：" + socketAddress);
-
-                    String msg = new StringBuilder("udp received packetData:\n").append(receiveData).append("\nfrom：" + socketAddress).toString();
-//                    Log.i(TAG, msg);
-                    if (null != socketEvent && !mReceiveUdpBroadcastDisposable.isDisposed()) {
-                        RxBus.getInstance().post(socketEvent);
-                    }
-                    mClientUdpSocket.close();
-                }, throwable -> {
-                    Log.e(TAG, throwable.getMessage(), throwable);
-                    mClientUdpSocket.close();
-                }, () -> {
-                });
+                String msg = new StringBuilder("udp received packetData:\n").append(receiveData).append("\nfrom：" + socketAddress).toString();
+                Log.i(TAG, msg);
+                SocketEvent socketEvent = new Gson().fromJson(receiveData, SocketEvent.class);
+                if (null != socketEvent) {
+                    RxBus.getInstance().post(socketEvent);
+                }
+            }
+        }).start();
     }
 
     /**
@@ -182,9 +185,6 @@ public class LanSocketService extends SocketService {
      * 停止客户端
      */
     public void stopClient() {
-        if (null != mReceiveUdpBroadcastDisposable) {
-            mReceiveUdpBroadcastDisposable.dispose();
-        }
         mClientLastReceivedHeartbeatResponseTime = 0;
         mIsClientRunning = false;
         RxBus.getInstance().post(new SocketEvent("client is stopped"));
@@ -212,7 +212,7 @@ public class LanSocketService extends SocketService {
                 }
                 Log.i(TAG, "tcp server is running ...");
                 Socket clientSocket;
-                if (null == mServerTaskThreadPool) {
+                if (null == mServerTaskThreadPool || mServerTaskThreadPool.isShutdown()) {
                     mServerTaskThreadPool = Executors.newCachedThreadPool();
                 }
                 while (mIsServerRunning) {
@@ -357,7 +357,7 @@ public class LanSocketService extends SocketService {
             mClientPrintWriterMap.remove(netAddress);
             mClientBufferedReaderMap.remove(netAddress);
             mClientHeartbeatResponseTimeMap.remove(netAddress);
-            RxBus.getInstance().post(new SocketEvent(SocketEvent.CODE_TCP_CLIENT_DEAD, null, null));
+            RxBus.getInstance().post(new SocketEvent(SocketEvent.CODE_TCP_CLIENT_DEAD, null, new Gson().toJson(netAddress).getBytes()));
             Log.i(TAG, "client:" + netAddress + " is dead");
         }
     }
@@ -431,6 +431,8 @@ public class LanSocketService extends SocketService {
         new Thread(() -> {
             try {
                 mClientTcpSocket = new Socket(serverIp, serverPort);
+
+                RxBus.getInstance().post(new SocketEvent(SocketEvent.CODE_TCP_SERVER_CONNECTED, null, null));
 
                 mClientTcpPort = mClientTcpSocket.getLocalPort();
 
@@ -581,6 +583,9 @@ public class LanSocketService extends SocketService {
     public void onDestroy() {
         stopServer();
         stopClient();
+        if (null != mClientUdpSocket) {
+            mClientUdpSocket.close();
+        }
         super.onDestroy();
     }
 }

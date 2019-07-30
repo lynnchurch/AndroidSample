@@ -9,7 +9,8 @@ public class SocketEvent {
     public static final int CODE_TCP_SERVER_DEAD = 5; // 服务器已挂
     public static final int CODE_TCP_CLIENT_ALIVE = 6; // 客户端还活着
     public static final int CODE_TCP_CLIENT_DEAD = 7; // 客户端已挂
-    public static final int CODE_TCP_TEXT = 8; // 文本消息
+    public static final int CODE_TCP_SERVER_CONNECTED = 8; // 已连接到服务器
+    public static final int CODE_TCP_TEXT = 9; // 文本消息
     public int code;
     public String msg;
     public byte[] data;

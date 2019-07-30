@@ -14,4 +14,8 @@
     <string name="start_client">开启客户端</string>
     <string name="stop_client">关闭客户端</string>
     <string name="end_session">结束会话</string>
+    <string name="please_send_to_server">你是客户端，请发消息</string>
+    <string name="please_send_to_client">你是服务端，请发消息</string>
+    <string name="server_dead">服务端已挂</string>
+    <string name="client_dead">客户端 %1$s 已挂</string>
 </resources>
