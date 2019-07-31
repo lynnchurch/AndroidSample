@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuInflater;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -71,6 +72,7 @@ public class ContentProviderActivity extends BaseActivity {
         BookItemAnimator bookItemAnimator = new BookItemAnimator();
         rvLibrary.setItemAnimator(bookItemAnimator);
         initLibrary();
+        remoteInvokeContentProviderCall();
     }
 
     private void initLibrary() {
@@ -108,6 +110,18 @@ public class ContentProviderActivity extends BaseActivity {
                 }, throwable ->
                         Log.e(TAG, throwable.getMessage(), throwable), () -> {
                 });
+    }
+
+    private void remoteInvokeContentProviderCall() {
+        Uri callUri = Uri.parse("content://me.lynnchurch.assist.provider");
+        try {
+            Bundle bundle = getContentResolver().call(callUri, "hello", "Lynn", null);
+            if (null != bundle) {
+                toast(bundle.getString("return"), Toast.LENGTH_SHORT);
+            }
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, e.getMessage(), e);
+        }
     }
 
     private void showPopupMenu(View ancherView, final int position) {

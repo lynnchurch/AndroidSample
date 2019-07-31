@@ -6,10 +6,15 @@ import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import me.lynnchurch.assist.db.LynnDatabase;
 import me.lynnchurch.assist.db.entity.Book;
@@ -52,7 +57,24 @@ public class LibraryProvider extends ContentProvider {
     public boolean onCreate() {
         Log.i(TAG, "onCreate, current thread:" + Thread.currentThread().getName());
         mContext = getContext();
+        initRemoteMethods();
         return true;
+    }
+
+    private void initRemoteMethods() {
+        RemoteMethodManager.put(new RemoteMethod() {
+            @Override
+            public String getMethodName() {
+                return "hello";
+            }
+
+            @Override
+            public Bundle invoke(@Nullable String arg, @Nullable Bundle extras) {
+                Bundle bundle = new Bundle();
+                bundle.putString("return", "Hello " + arg + "!");
+                return bundle;
+            }
+        });
     }
 
     @Nullable
@@ -122,4 +144,12 @@ public class LibraryProvider extends ContentProvider {
     public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs) {
         return 0;
     }
+
+    @Nullable
+    @Override
+    public Bundle call(@NonNull String method, @Nullable String arg, @Nullable Bundle extras) {
+        RemoteMethod remoteMethod = RemoteMethodManager.get(method);
+        return remoteMethod == null ? null : remoteMethod.invoke(arg, extras);
+    }
+
 }
