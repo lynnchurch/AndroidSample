@@ -1,6 +1,7 @@
 package me.lynnchurch.samples.activity;
 
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -29,6 +30,7 @@ import me.lynnchurch.samples.adapter.LibraryAdapter;
 import me.lynnchurch.samples.anim.BookItemAnimator;
 import me.lynnchurch.samples.db.entity.Book;
 import me.lynnchurch.samples.db.entity.User;
+import me.lynnchurch.samples.utils.Utils;
 
 public class ContentProviderActivity extends BaseActivity {
     private static final String TAG = ContentProviderActivity.class.getSimpleName();
@@ -76,7 +78,7 @@ public class ContentProviderActivity extends BaseActivity {
             List<LibraryAdapter.Library> libraries = new ArrayList<>();
             Uri getBookUri = Uri.parse("content://me.lynnchurch.assist.provider/book/getBooks");
             Cursor bookCursor = getContentResolver().query(getBookUri, null, null, null, null);
-            while (bookCursor.moveToNext()) {
+            while (null != bookCursor && bookCursor.moveToNext()) {
                 LibraryAdapter.Library library = new LibraryAdapter.Library();
                 Book book = new Book();
                 book.set_id(bookCursor.getLong(0));
@@ -88,7 +90,7 @@ public class ContentProviderActivity extends BaseActivity {
 
             Uri getUserUri = Uri.parse("content://me.lynnchurch.assist.provider/user/getUsers");
             Cursor userCursor = getContentResolver().query(getUserUri, null, null, null, null);
-            while (userCursor.moveToNext()) {
+            while (null != userCursor && userCursor.moveToNext()) {
                 LibraryAdapter.Library library = new LibraryAdapter.Library();
                 User user = new User();
                 user.set_id(userCursor.getLong(0));
@@ -103,6 +105,8 @@ public class ContentProviderActivity extends BaseActivity {
                 .subscribe(libraries -> {
                     mLibraries.addAll(libraries);
                     mLibraryAdapter.notifyDataSetChanged();
+                }, throwable ->
+                        Log.e(TAG, throwable.getMessage(), throwable), () -> {
                 });
     }
 
@@ -157,11 +161,13 @@ public class ContentProviderActivity extends BaseActivity {
             emitter.onNext(library);
         }).subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread())
                 .subscribe(library -> {
-                    mLibraries.add(0, library);
-                    mLibraryAdapter.notifyItemInserted(0);
-                    mLibraryAdapter.notifyItemRangeChanged(0, mLibraries.size());
-                    rvLibrary.scrollToPosition(0);
-                });
+                            mLibraries.add(0, library);
+                            mLibraryAdapter.notifyItemInserted(0);
+                            mLibraryAdapter.notifyItemRangeChanged(0, mLibraries.size());
+                            rvLibrary.scrollToPosition(0);
+                        }, throwable -> Log.e(TAG, throwable.getMessage(), throwable)
+                        , () -> {
+                        });
 
     }
 
@@ -188,6 +194,8 @@ public class ContentProviderActivity extends BaseActivity {
                     mLibraryAdapter.notifyItemInserted(0);
                     mLibraryAdapter.notifyItemRangeChanged(0, mLibraries.size());
                     rvLibrary.scrollToPosition(0);
+                }, throwable -> Log.e(TAG, throwable.getMessage(), throwable), () -> {
                 });
     }
+
 }

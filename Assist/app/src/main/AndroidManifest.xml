@@ -65,15 +65,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
 
                 <data android:mimeType="image/*" />
-
             </intent-filter>
         </activity>
-
         <activity
             android:name=".activity.AIDLActivity"
             android:configChanges="orientation|screenSize"
             android:launchMode="singleTop" />
-
         <activity
             android:name=".activity.MessengerActivity"
             android:configChanges="orientation|screenSize"
@@ -82,8 +79,8 @@
         <provider
             android:name=".provider.LibraryProvider"
             android:authorities="me.lynnchurch.assist.provider"
-            android:permission="lynnchurch.permission.LIBRARY_PROVIDER"
             android:exported="true"
+            android:permission="lynnchurch.permission.LIBRARY_PROVIDER"
             android:process=":provider" />
     </application>
 

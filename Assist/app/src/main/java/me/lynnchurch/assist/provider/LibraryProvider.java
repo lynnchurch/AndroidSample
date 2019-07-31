@@ -46,14 +46,12 @@ public class LibraryProvider extends ContentProvider {
     }
 
     private Context mContext;
-    private LynnDatabase mLynnDatabase;
 
 
     @Override
     public boolean onCreate() {
         Log.i(TAG, "onCreate, current thread:" + Thread.currentThread().getName());
         mContext = getContext();
-        mLynnDatabase = LynnDatabase.getInstance(mContext);
         return true;
     }
 
