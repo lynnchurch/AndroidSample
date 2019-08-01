@@ -110,7 +110,9 @@ public class MessengerActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
-        unbindService(mServiceConnection);
+        if (rxPermissions.isGranted("lynnchurch.permission.MESSENGER")) {
+            unbindService(mServiceConnection);
+        }
         super.onDestroy();
     }
 }

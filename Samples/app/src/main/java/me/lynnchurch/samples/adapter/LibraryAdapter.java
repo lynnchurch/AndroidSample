@@ -10,9 +10,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
+import me.lynnchurch.samples.bean.User;
 import me.lynnchurch.samples.R;
 import me.lynnchurch.samples.db.entity.Book;
-import me.lynnchurch.samples.db.entity.User;
 
 public class LibraryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private List<Library> mData;

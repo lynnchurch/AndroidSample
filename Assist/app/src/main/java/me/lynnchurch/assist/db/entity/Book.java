@@ -1,4 +1,4 @@
-package me.lynnchurch.samples.db.entity;
+package me.lynnchurch.assist.db.entity;
 
 import android.os.Parcel;
 import android.os.Parcelable;

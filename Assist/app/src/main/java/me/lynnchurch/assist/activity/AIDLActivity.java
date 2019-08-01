@@ -98,7 +98,7 @@ public class AIDLActivity extends BaseActivity {
         if (null == mBookManager) {
             return;
         }
-        long id = mRandom.nextLong();
+        long id = Math.abs(mRandom.nextLong());
         Book_AIDL bookAIDL = new Book_AIDL(id, "书籍" + id);
         mBookAIDLS.add(0, bookAIDL);
         mBooksAdapter.notifyItemInserted(0);
@@ -233,8 +233,10 @@ public class AIDLActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-        unbindService(mServiceConnection);
+        if (rxPermissions.isGranted("lynnchurch.permission.MANAGE_BOOKS")) {
+            unbindService(mServiceConnection);
+        }
+
         if (null != mBookManager) {
             try {
                 mBookManager.removeIOnBookArrivedListener(mIOnBookArrivedListener);
@@ -242,5 +244,6 @@ public class AIDLActivity extends BaseActivity {
                 Log.e(TAG, e.getMessage(), e);
             }
         }
+        super.onDestroy();
     }
 }

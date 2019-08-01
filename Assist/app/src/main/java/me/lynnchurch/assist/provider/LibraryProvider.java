@@ -12,11 +12,13 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.gson.Gson;
+
 import java.util.ArrayList;
 
-import me.lynnchurch.samples.db.LynnDatabase;
-import me.lynnchurch.samples.db.entity.Book;
-import me.lynnchurch.samples.db.entity.User;
+import me.lynnchurch.assist.db.LynnDatabase;
+import me.lynnchurch.assist.db.entity.Book;
+import me.lynnchurch.assist.db.entity.User;
 
 public class LibraryProvider extends ContentProvider {
     private static final String TAG = LibraryProvider.class.getSimpleName();
@@ -77,56 +79,6 @@ public class LibraryProvider extends ContentProvider {
         };
         remoteMethodManager.put(hello);
 
-        RemoteMethod getBooks = new RemoteMethod() {
-            @Override
-            public String getMethodName() {
-                return "getBooks";
-            }
-
-            @Override
-            public Bundle invoke(@Nullable String arg, @Nullable Bundle extras) {
-                Bundle bundle = new Bundle();
-                ArrayList<Book> books = new ArrayList<>();
-                books.addAll(LynnDatabase.getInstance(mContext).getBookDao().getBooks());
-                bundle.putParcelableArrayList(RESULT, books);
-                return null;
-            }
-        };
-        remoteMethodManager.put(getBooks);
-
-        RemoteMethod addBook = new RemoteMethod() {
-            @Override
-            public String getMethodName() {
-                return "addBook";
-            }
-
-            @Override
-            public Bundle invoke(@Nullable String arg, @Nullable Bundle extras) {
-                Book book = extras.getParcelable("book");
-                long bookId = LynnDatabase.getInstance(mContext).getBookDao().addBook(book);
-                Bundle bundle = new Bundle();
-                bundle.putLong(RESULT, bookId);
-                return bundle;
-            }
-        };
-        remoteMethodManager.put(addBook);
-
-        RemoteMethod delBook = new RemoteMethod() {
-            @Override
-            public String getMethodName() {
-                return "delBook";
-            }
-
-            @Override
-            public Bundle invoke(@Nullable String arg, @Nullable Bundle extras) {
-                Book book = new Book();
-                book.set_id(extras.getLong("id"));
-                LynnDatabase.getInstance(mContext).getBookDao().delBook(book);
-                return null;
-            }
-        };
-        remoteMethodManager.put(delBook);
-
         RemoteMethod getUsers = new RemoteMethod() {
             @Override
             public String getMethodName() {
@@ -138,8 +90,8 @@ public class LibraryProvider extends ContentProvider {
                 Bundle bundle = new Bundle();
                 ArrayList<User> users = new ArrayList<>();
                 users.addAll(LynnDatabase.getInstance(mContext).getUserDao().getUsers());
-                bundle.putParcelableArrayList(RESULT, users);
-                return null;
+                bundle.putString(RESULT, new Gson().toJson(users));
+                return bundle;
             }
         };
         remoteMethodManager.put(getUsers);
@@ -152,7 +104,7 @@ public class LibraryProvider extends ContentProvider {
 
             @Override
             public Bundle invoke(@Nullable String arg, @Nullable Bundle extras) {
-                User user = extras.getParcelable("user");
+                User user = new Gson().fromJson(extras.getString("user"), User.class);
                 long userId = LynnDatabase.getInstance(mContext).getUserDao().addUser(user);
                 Bundle bundle = new Bundle();
                 bundle.putLong(RESULT, userId);

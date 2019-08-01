@@ -1,4 +1,4 @@
-package me.lynnchurch.samples.db.dao;
+package me.lynnchurch.assist.db.dao;
 
 import android.database.Cursor;
 
@@ -9,7 +9,7 @@ import androidx.room.Query;
 
 import java.util.List;
 
-import me.lynnchurch.samples.db.entity.Book;
+import me.lynnchurch.assist.db.entity.Book;
 
 @Dao
 public interface BookDao {
