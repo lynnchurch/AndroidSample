@@ -35,7 +35,7 @@ public class BooksService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Observable.interval(10, TimeUnit.SECONDS).map(aLong -> {
+        Observable.interval(20, TimeUnit.SECONDS).map(aLong -> {
             if (mIsServiceDestroyed.get()) {
                 mDisposable.dispose();
                 return null;
