@@ -1,5 +1,6 @@
 package me.lynnchurch.assist.activity;
 
+import android.Manifest;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -15,11 +16,14 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.tbruyelle.rxpermissions2.RxPermissions;
+
 import me.lynnchurch.assist.R;
 import me.lynnchurch.assist.config.Constants;
 
 public class MessengerActivity extends BaseActivity {
     private static final String TAG = MessengerActivity.class.getSimpleName();
+    private final RxPermissions rxPermissions = new RxPermissions(this);
     private Messenger mMessenger;
     private TextView tvContent;
     private StringBuilder mContent = new StringBuilder();
@@ -28,15 +32,27 @@ public class MessengerActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSupportActionBar().setTitle("Assist Messenger");
-        Intent intent = new Intent();
-        intent.setClassName("me.lynnchurch.samples", "me.lynnchurch.samples.service.MessengerService");
-        bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
+        requestPermissions();
         initView();
     }
 
     @Override
     protected int getLayoutResID() {
         return R.layout.activity_messenger;
+    }
+
+    private void requestPermissions() {
+        rxPermissions.request("lynnchurch.permission.MESSENGER")
+                .subscribe(granted -> {
+                    if (granted) {
+                        Log.i(TAG, "MESSENGER is granted");
+                        Intent intent = new Intent();
+                        intent.setClassName("me.lynnchurch.samples", "me.lynnchurch.samples.service.MessengerService");
+                        bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
+                    } else {
+                        Log.i(TAG, "MESSENGER is not granted");
+                    }
+                });
     }
 
     private void initView() {

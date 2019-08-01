@@ -8,6 +8,7 @@
         android:label="manage library"
         android:protectionLevel="normal" />
 
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="lynnchurch.permission.MANAGE_BOOKS" />
     <uses-permission android:name="lynnchurch.permission.MESSENGER" />
 

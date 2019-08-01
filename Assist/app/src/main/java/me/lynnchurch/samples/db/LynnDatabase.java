@@ -1,4 +1,4 @@
-package me.lynnchurch.assist.db;
+package me.lynnchurch.samples.db;
 
 import android.content.Context;
 
@@ -6,10 +6,10 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-import me.lynnchurch.assist.db.dao.BookDao;
-import me.lynnchurch.assist.db.dao.UserDao;
-import me.lynnchurch.assist.db.entity.Book;
-import me.lynnchurch.assist.db.entity.User;
+import me.lynnchurch.samples.db.dao.BookDao;
+import me.lynnchurch.samples.db.dao.UserDao;
+import me.lynnchurch.samples.db.entity.Book;
+import me.lynnchurch.samples.db.entity.User;
 
 
 @Database(entities = {Book.class, User.class}, version = 1, exportSchema = false)

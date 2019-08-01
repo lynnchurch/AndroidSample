@@ -28,13 +28,13 @@ public class MainActivity extends BaseActivity {
         return R.layout.activity_main;
     }
 
-    private void requestPermissions(){
+    private void requestPermissions() {
         rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 .subscribe(granted -> {
-                    if(granted) {
-                        Log.i(TAG,"WRITE_EXTERNAL_STORAGE is granted");
+                    if (granted) {
+                        Log.i(TAG, "WRITE_EXTERNAL_STORAGE is granted");
                     } else {
-                        Log.i(TAG,"WRITE_EXTERNAL_STORAGE is not granted");
+                        Log.i(TAG, "WRITE_EXTERNAL_STORAGE is not granted");
                     }
                 });
     }
@@ -109,7 +109,7 @@ public class MainActivity extends BaseActivity {
         startActivity(new Intent(this, DActivity.class));
     }
 
-    public void toIPCActivity(View view) {
+    public void toAIDLActivity(View view) {
         startActivity(new Intent(this, AIDLActivity.class));
     }
 }

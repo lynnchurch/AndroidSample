@@ -20,6 +20,8 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.tbruyelle.rxpermissions2.RxPermissions;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -35,6 +37,7 @@ import me.lynnchurch.samples.aidl.IOnBookArrivedListener;
 
 public class AIDLActivity extends BaseActivity {
     private static final String TAG = AIDLActivity.class.getSimpleName();
+    private final RxPermissions rxPermissions = new RxPermissions(this);
 
     @BindView(R.id.rvBooks)
     RecyclerView rvBooks;
@@ -47,11 +50,23 @@ public class AIDLActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getSupportActionBar().setTitle("Assist IPCActivity");
-        Intent intent = new Intent();
-        intent.setClassName("me.lynnchurch.samples", "me.lynnchurch.samples.service.BooksService");
-        bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
+        getSupportActionBar().setTitle(getString(R.string.app_name) + " " + AIDLActivity.class.getSimpleName());
+        requestPermissions();
         init();
+    }
+
+    private void requestPermissions() {
+        rxPermissions.request("lynnchurch.permission.MANAGE_BOOKS")
+                .subscribe(granted -> {
+                    if (granted) {
+                        Log.i(TAG, "MANAGE_BOOKS is granted");
+                        Intent intent = new Intent();
+                        intent.setClassName("me.lynnchurch.samples", "me.lynnchurch.samples.service.BooksService");
+                        bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
+                    } else {
+                        Log.i(TAG, "MANAGE_BOOKS is not granted");
+                    }
+                });
     }
 
     @Override

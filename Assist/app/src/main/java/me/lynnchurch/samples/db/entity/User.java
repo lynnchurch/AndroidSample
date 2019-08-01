@@ -6,13 +6,12 @@ import android.os.Parcelable;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-import me.lynnchurch.samples.aidl.Book_AIDL;
-
 @Entity
-public class Book implements Parcelable {
+public class User implements Parcelable {
     @PrimaryKey(autoGenerate = true)
     private long _id;
     private String name;
+    private int age;
 
     public long get_id() {
         return _id;
@@ -30,25 +29,12 @@ public class Book implements Parcelable {
         this.name = name;
     }
 
-    public static class BookId {
-        private long _id;
-
-        public BookId(long id) {
-            this._id = id;
-        }
-
-        public long getId() {
-            return _id;
-        }
-
-        public void setId(long id) {
-            this._id = id;
-        }
+    public int getAge() {
+        return age;
     }
 
-    public Book_AIDL convertToBook_AIDL() {
-        Book_AIDL book_aidl = new Book_AIDL(get_id(), getName());
-        return book_aidl;
+    public void setAge(int age) {
+        this.age = age;
     }
 
 
@@ -61,25 +47,27 @@ public class Book implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeLong(this._id);
         dest.writeString(this.name);
+        dest.writeInt(this.age);
     }
 
-    public Book() {
+    public User() {
     }
 
-    protected Book(Parcel in) {
+    protected User(Parcel in) {
         this._id = in.readLong();
         this.name = in.readString();
+        this.age = in.readInt();
     }
 
-    public static final Parcelable.Creator<Book> CREATOR = new Parcelable.Creator<Book>() {
+    public static final Creator<User> CREATOR = new Creator<User>() {
         @Override
-        public Book createFromParcel(Parcel source) {
-            return new Book(source);
+        public User createFromParcel(Parcel source) {
+            return new User(source);
         }
 
         @Override
-        public Book[] newArray(int size) {
-            return new Book[size];
+        public User[] newArray(int size) {
+            return new User[size];
         }
     };
 }

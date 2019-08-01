@@ -31,10 +31,11 @@ import me.lynnchurch.samples.adapter.LibraryAdapter;
 import me.lynnchurch.samples.anim.BookItemAnimator;
 import me.lynnchurch.samples.db.entity.Book;
 import me.lynnchurch.samples.db.entity.User;
-import me.lynnchurch.samples.utils.Utils;
 
 public class ContentProviderActivity extends BaseActivity {
     private static final String TAG = ContentProviderActivity.class.getSimpleName();
+    private static final Uri LIBRARY_CALL_URI = Uri.parse("content://me.lynnchurch.assist.provider");
+    public static final String RESULT = "result";
     @BindView(R.id.rvLibrary)
     RecyclerView rvLibrary;
     private LibraryAdapter mLibraryAdapter;
@@ -78,17 +79,21 @@ public class ContentProviderActivity extends BaseActivity {
     private void initLibrary() {
         Observable.create((ObservableOnSubscribe<List<LibraryAdapter.Library>>) emitter -> {
             List<LibraryAdapter.Library> libraries = new ArrayList<>();
-            Uri getBookUri = Uri.parse("content://me.lynnchurch.assist.provider/book/getBooks");
-            Cursor bookCursor = getContentResolver().query(getBookUri, null, null, null, null);
-            while (null != bookCursor && bookCursor.moveToNext()) {
-                LibraryAdapter.Library library = new LibraryAdapter.Library();
-                Book book = new Book();
-                book.set_id(bookCursor.getLong(0));
-                book.setName(bookCursor.getString(1));
-                library.type = LibraryAdapter.Library.TYPE_BOOK;
-                library.book = book;
-                libraries.add(library);
+            try {
+                Bundle bundle = getContentResolver().call(LIBRARY_CALL_URI, "getBooks", null, null);
+                List<Book> books;
+                if (null != bundle && null != (books = bundle.getParcelableArrayList(RESULT))) {
+                    for (Book book : books) {
+                        LibraryAdapter.Library library = new LibraryAdapter.Library();
+                        library.type = LibraryAdapter.Library.TYPE_BOOK;
+                        library.book = book;
+                        libraries.add(library);
+                    }
+                }
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, e.getMessage(), e);
             }
+
 
             Uri getUserUri = Uri.parse("content://me.lynnchurch.assist.provider/user/getUsers");
             Cursor userCursor = getContentResolver().query(getUserUri, null, null, null, null);
@@ -113,11 +118,10 @@ public class ContentProviderActivity extends BaseActivity {
     }
 
     private void remoteInvokeContentProviderCall() {
-        Uri callUri = Uri.parse("content://me.lynnchurch.assist.provider");
         try {
-            Bundle bundle = getContentResolver().call(callUri, "hello", "Lynn", null);
+            Bundle bundle = getContentResolver().call(LIBRARY_CALL_URI, "hello", "Lynn", null);
             if (null != bundle) {
-                toast(bundle.getString("return"), Toast.LENGTH_SHORT);
+                toast(bundle.getString(RESULT), Toast.LENGTH_SHORT);
             }
         } catch (IllegalArgumentException e) {
             Log.e(TAG, e.getMessage(), e);
@@ -137,19 +141,18 @@ public class ContentProviderActivity extends BaseActivity {
                     mLibraryAdapter.notifyItemRangeChanged(position, mLibraries.size());
 
                     new Thread(() -> {
-                        long id = 0;
-                        Uri uri = null;
                         switch (library.type) {
                             case LibraryAdapter.Library.TYPE_BOOK:
-                                id = library.book.get_id();
-                                uri = Uri.parse("content://me.lynnchurch.assist.provider/book/delBook");
+                                Bundle extras = new Bundle();
+                                extras.putLong("id", library.book.get_id());
+                                getContentResolver().call(LIBRARY_CALL_URI, "delBook", null, extras);
                                 break;
                             case LibraryAdapter.Library.TYPE_USER:
-                                id = library.user.get_id();
-                                uri = Uri.parse("content://me.lynnchurch.assist.provider/user/delUser");
+                                long id = library.user.get_id();
+                                Uri uri = Uri.parse("content://me.lynnchurch.assist.provider/user/delUser");
+                                getContentResolver().delete(uri, null, new String[]{String.valueOf(id)});
                                 break;
                         }
-                        getContentResolver().delete(uri, null, new String[]{String.valueOf(id)});
                     }).start();
                     break;
             }
@@ -163,10 +166,12 @@ public class ContentProviderActivity extends BaseActivity {
         Observable.create((ObservableOnSubscribe<LibraryAdapter.Library>) emitter -> {
             Book book = new Book();
             book.setName("书籍 " + Math.abs(mRandom.nextInt()));
-            ContentValues contentValues = new ContentValues();
-            contentValues.put("name", book.getName());
-            Uri uri = getContentResolver().insert(Uri.parse("content://me.lynnchurch.assist.provider/book/addBook"), contentValues);
-            long id = Long.parseLong(uri.getPath().substring(1));
+
+            Bundle extras = new Bundle();
+            extras.putParcelable("book", book);
+            Bundle result = getContentResolver().call(LIBRARY_CALL_URI, "addBook", null, extras);
+            long id = result.getLong(RESULT);
+
             Log.i(TAG, "bookId:" + id);
             book.set_id(id);
             LibraryAdapter.Library library = new LibraryAdapter.Library();

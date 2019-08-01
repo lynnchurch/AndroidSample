@@ -12,17 +12,16 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.ArrayList;
 
-import me.lynnchurch.assist.db.LynnDatabase;
-import me.lynnchurch.assist.db.entity.Book;
-import me.lynnchurch.assist.db.entity.User;
+import me.lynnchurch.samples.db.LynnDatabase;
+import me.lynnchurch.samples.db.entity.Book;
+import me.lynnchurch.samples.db.entity.User;
 
 public class LibraryProvider extends ContentProvider {
     private static final String TAG = LibraryProvider.class.getSimpleName();
 
+    public static final String RESULT = "result";
     public static final String AUTHORITY = "me.lynnchurch.assist.provider";
     private static final String CONTENT_SCHEMA = "content://";
     public static final Uri BOOK_GET_BOOKS_URI = Uri.parse(CONTENT_SCHEMA + AUTHORITY + "/book/getBooks");
@@ -40,6 +39,7 @@ public class LibraryProvider extends ContentProvider {
     public static final int USER_DEL_USER_CODE = 5;
 
     private static final UriMatcher mUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+    private static final RemoteMethodManager remoteMethodManager = new RemoteMethodManager();
 
     static {
         mUriMatcher.addURI(AUTHORITY, "book/getBooks", BOOK_GET_BOOKS_CODE);
@@ -62,7 +62,7 @@ public class LibraryProvider extends ContentProvider {
     }
 
     private void initRemoteMethods() {
-        RemoteMethodManager.put(new RemoteMethod() {
+        RemoteMethod hello = new RemoteMethod() {
             @Override
             public String getMethodName() {
                 return "hello";
@@ -71,10 +71,111 @@ public class LibraryProvider extends ContentProvider {
             @Override
             public Bundle invoke(@Nullable String arg, @Nullable Bundle extras) {
                 Bundle bundle = new Bundle();
-                bundle.putString("return", "Hello " + arg + "!");
+                bundle.putString(RESULT, "Hello " + arg + "!");
                 return bundle;
             }
-        });
+        };
+        remoteMethodManager.put(hello);
+
+        RemoteMethod getBooks = new RemoteMethod() {
+            @Override
+            public String getMethodName() {
+                return "getBooks";
+            }
+
+            @Override
+            public Bundle invoke(@Nullable String arg, @Nullable Bundle extras) {
+                Bundle bundle = new Bundle();
+                ArrayList<Book> books = new ArrayList<>();
+                books.addAll(LynnDatabase.getInstance(mContext).getBookDao().getBooks());
+                bundle.putParcelableArrayList(RESULT, books);
+                return null;
+            }
+        };
+        remoteMethodManager.put(getBooks);
+
+        RemoteMethod addBook = new RemoteMethod() {
+            @Override
+            public String getMethodName() {
+                return "addBook";
+            }
+
+            @Override
+            public Bundle invoke(@Nullable String arg, @Nullable Bundle extras) {
+                Book book = extras.getParcelable("book");
+                long bookId = LynnDatabase.getInstance(mContext).getBookDao().addBook(book);
+                Bundle bundle = new Bundle();
+                bundle.putLong(RESULT, bookId);
+                return bundle;
+            }
+        };
+        remoteMethodManager.put(addBook);
+
+        RemoteMethod delBook = new RemoteMethod() {
+            @Override
+            public String getMethodName() {
+                return "delBook";
+            }
+
+            @Override
+            public Bundle invoke(@Nullable String arg, @Nullable Bundle extras) {
+                Book book = new Book();
+                book.set_id(extras.getLong("id"));
+                LynnDatabase.getInstance(mContext).getBookDao().delBook(book);
+                return null;
+            }
+        };
+        remoteMethodManager.put(delBook);
+
+        RemoteMethod getUsers = new RemoteMethod() {
+            @Override
+            public String getMethodName() {
+                return "getUsers";
+            }
+
+            @Override
+            public Bundle invoke(@Nullable String arg, @Nullable Bundle extras) {
+                Bundle bundle = new Bundle();
+                ArrayList<User> users = new ArrayList<>();
+                users.addAll(LynnDatabase.getInstance(mContext).getUserDao().getUsers());
+                bundle.putParcelableArrayList(RESULT, users);
+                return null;
+            }
+        };
+        remoteMethodManager.put(getUsers);
+
+        RemoteMethod addUser = new RemoteMethod() {
+            @Override
+            public String getMethodName() {
+                return "addUser";
+            }
+
+            @Override
+            public Bundle invoke(@Nullable String arg, @Nullable Bundle extras) {
+                User user = extras.getParcelable("user");
+                long userId = LynnDatabase.getInstance(mContext).getUserDao().addUser(user);
+                Bundle bundle = new Bundle();
+                bundle.putLong(RESULT, userId);
+                return bundle;
+            }
+        };
+        remoteMethodManager.put(addUser);
+
+        RemoteMethod delUser = new RemoteMethod() {
+            @Override
+            public String getMethodName() {
+                return "delUser";
+            }
+
+            @Override
+            public Bundle invoke(@Nullable String arg, @Nullable Bundle extras) {
+                User user = new User();
+                user.set_id(extras.getLong("id"));
+                LynnDatabase.getInstance(mContext).getUserDao().delUser(user);
+                return null;
+            }
+        };
+        remoteMethodManager.put(delUser);
     }
 
     @Nullable
@@ -148,7 +249,7 @@ public class LibraryProvider extends ContentProvider {
     @Nullable
     @Override
     public Bundle call(@NonNull String method, @Nullable String arg, @Nullable Bundle extras) {
-        RemoteMethod remoteMethod = RemoteMethodManager.get(method);
+        RemoteMethod remoteMethod = remoteMethodManager.get(method);
         return remoteMethod == null ? null : remoteMethod.invoke(arg, extras);
     }
 
