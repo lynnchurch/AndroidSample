@@ -92,6 +92,10 @@ public class AActivity extends BaseActivity {
         startActivity(new Intent(this, CActivity.class));
     }
 
+    public void toDActivity(View view) {
+        startActivity(new Intent(this, DActivity.class));
+    }
+
     public void toMainActivity(View view) {
         startActivity(new Intent(this, MainActivity.class));
     }
