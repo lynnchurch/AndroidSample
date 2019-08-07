@@ -116,7 +116,7 @@ public class AIDLActivity extends BaseActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.messenger, menu);
+        getMenuInflater().inflate(R.menu.aidl, menu);
         return true;
     }
 
@@ -126,6 +126,8 @@ public class AIDLActivity extends BaseActivity {
             case R.id.messenger:
                 startActivity(new Intent(AIDLActivity.this, MessengerActivity.class));
                 break;
+            case R.id.binderPool:
+                startActivity(new Intent(AIDLActivity.this,BinderPoolActivity.class));
             default:
                 return onContextItemSelected(item);
         }

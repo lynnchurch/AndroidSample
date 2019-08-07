@@ -26,15 +26,17 @@ Activity：A(standard)、B(singleTop)、C(singleTask)、D(singleInstance)
 
 * allowTaskRearenting属性是这样的：假定应用A打开应用B的Activity(allowTaskRearenting属性为ture)，那么该Activity会处于应用B的任务栈中，如果该Activity的allowTaskRearenting属性为false，则会处于应用A的任务栈中。从所处任务栈这一点来看，效果和设置Intent.FLAG_ACTIVITY_NEW_TASK打开该Activity是一样的，区别在按返回键上，allowTaskRearenting属性为ture的Activity按返回键时会自动创建应用的入口Activity，而仅设置Intent.FLAG_ACTIVITY_NEW_TASK的Activity会直接被结束
 
-## AIDL、Messenger
+## AIDL、Messenger、BinderPool
 
-![AIDL](images/AIDL.png)  ![Messenger](images/Messenger.png)
+![AIDL](images/AIDL.png)  ![Messenger](images/Messenger.png) ![BinderPool](images/BinderPool.png)
 
 * AIDL文件其实只是方便我们写Binder接口而已，用AIDL和Messenger都能进行IPC，AIDL用来RPC，Messenger专注收发消息
 
 * AIDL中用于传输的类要实现Parcelable接口且位于java目录中，还要创建一个同名的aidl文件（用于映射传输类）位于aidl资源目录中，两个文件得保持一致的包名
 
 * AIDL中使用的aidl文件都得用import导入进来，用到的参数除了基本数据类型都得声明方向（in、out、inout）
+
+* 通常一个Service对应一个AIDL接口，当我们有大量的AIDL接口时就得创建相应数量的Service，这会造成Service资源的浪费，大量的Service也会使应用显得很臃肿。而通过BinderPool就可以使一个Service对应多个AIDL接口，当我们连接服务后只会获得一个IBinder,但是通过这个IBinder可以返回多个IBinder，这样就解决了一个Service对应多个AIDL接口的问题。
 
 ## ContentProvider
 

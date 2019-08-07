@@ -88,6 +88,10 @@
             android:name=".activity.SocketActivity"
             android:configChanges="orientation|screenSize"
             android:launchMode="singleTop" />
+        <activity
+            android:name=".activity.BinderPoolActivity"
+            android:configChanges="orientation|screenSize"
+            android:launchMode="singleTop" />
 
         <service
             android:name=".service.BooksService"
@@ -105,6 +109,12 @@
             android:name=".service.LanSocketService"
             android:enabled="true"
             android:exported="false" />
+
+        <service
+            android:name=".service.BinderPoolService"
+            android:enabled="true"
+            android:exported="true"
+            android:process=":binder_pool"/>
     </application>
 
 </manifest>

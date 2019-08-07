@@ -5,4 +5,9 @@
         android:id="@+id/messenger"
         android:title="Messenger"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/binderPool"
+        android:title="BinderPool"
+        app:showAsAction="always" />
 </menu>
