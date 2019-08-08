@@ -5,6 +5,7 @@
         <item>AIDL、Messenger</item>
         <item>ContentProvider</item>
         <item>Socket</item>
+        <item>View</item>
     </string-array>
     <string name="app_not_installed">应用未安装</string>
     <string name="books_service_permission_description">manage books by BooksService</string>
@@ -18,4 +19,7 @@
     <string name="please_send_to_client">你是服务端，请发消息</string>
     <string name="server_dead">服务端已挂</string>
     <string name="client_dead">客户端 %1$s 已挂</string>
+    <string-array name="view_samples">
+        <item>拖动View</item>
+    </string-array>
 </resources>

@@ -22,6 +22,7 @@ public class MainActivity extends BaseActivity {
     private static final int POSITION_IPC = 1;
     private static final int POSITION_CONTENT_PROVIDER = 2;
     private static final int POSITION_SOCKET = 3;
+    private static final int POSITION_VIEW = 4;
     private static final String TAG = MainActivity.class.getSimpleName();
     private final RxPermissions rxPermissions = new RxPermissions(this);
     @BindView(R.id.rvTitles)
@@ -59,6 +60,9 @@ public class MainActivity extends BaseActivity {
                         break;
                     case POSITION_SOCKET:
                         intent = new Intent(MainActivity.this, SocketActivity.class);
+                        break;
+                    case POSITION_VIEW:
+                        intent = new Intent(MainActivity.this, ViewActivity.class);
                         break;
                     default:
                         intent = new Intent(MainActivity.this, LifecycleAndLaunchModeActivity.class);
