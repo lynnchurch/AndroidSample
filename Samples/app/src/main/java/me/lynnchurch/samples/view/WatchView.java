@@ -69,7 +69,7 @@ public class WatchView extends View {
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.WatchView, defStyleAttr, 0);
         mHourPointerColor = a.getColor(R.styleable.WatchView_hour_pointer_color, Color.WHITE);
         mMinutePointerColor = a.getColor(R.styleable.WatchView_minute_pointer_color, Color.WHITE);
-        mSecondPointerColor = a.getColor(R.styleable.WatchView_second_pointer_color, Color.argb(200, 181, 140, 78));
+        mSecondPointerColor = a.getColor(R.styleable.WatchView_second_pointer_color, Color.argb(222, 181, 140, 78));
         mTwelveColor = a.getColor(R.styleable.WatchView_twelve_color, Color.WHITE);
         mSixtyColor = a.getColor(R.styleable.WatchView_sixty_color, Color.WHITE);
         mScaleColor = a.getColor(R.styleable.WatchView_scale_color, Color.argb(200, 255, 255, 255));
@@ -222,6 +222,8 @@ public class WatchView extends View {
         drawHourPointer(canvas);
         // 绘制分针
         drawMinutePointer(canvas);
+        // 绘制秒针
+        drawSecondPointer(canvas);
     }
 
     /**
@@ -260,7 +262,6 @@ public class WatchView extends View {
      * @param canvas
      */
     private void drawMinutePointer(Canvas canvas) {
-        int hour = mCalendar.get(Calendar.HOUR);
         int minute = mCalendar.get(Calendar.MINUTE);
         int second = mCalendar.get(Calendar.SECOND);
         mPaint.setColor(mMinutePointerColor);
@@ -282,5 +283,35 @@ public class WatchView extends View {
         canvas.drawLine(thinPointerX, thinPointerY, thickPointerX, thickPointerY, mPaint);
         // 绘制圆心点
         canvas.drawCircle(mCentrePointX, mCentrePointY, mHourMinutePointerStrokeWidth / 2, mPaint);
+    }
+
+    /**
+     * 绘制秒针
+     *
+     * @param canvas
+     */
+    private void drawSecondPointer(Canvas canvas) {
+        int second = mCalendar.get(Calendar.SECOND);
+        mPaint.setColor(mSecondPointerColor);
+        mPaint.setStrokeWidth(mHourMinutePointerStrokeWidth / 4f);
+        mPaint.setStrokeCap(Paint.Cap.ROUND);
+        // 秒针转过的角度
+        float secondAngle = second * 360 / 60f;
+        double secondRadians = secondAngle / 360 * 2 * Math.PI;
+        // 绘制长指针的一端
+        float longPointerLength = mSize / 2.6f;
+        float longPointerX = mCentrePointX + longPointerLength * (float) Math.sin(secondRadians);
+        float longPointerY = mCentrePointY - longPointerLength * (float) Math.cos(secondRadians);
+        canvas.drawLine(mCentrePointX, mCentrePointY, longPointerX, longPointerY, mPaint);
+        // 绘制短指针的一端
+        float shortPointerLength = mSize / 14.5f;
+        float thickPointerX = mCentrePointX + shortPointerLength * (float) Math.sin(secondRadians + Math.PI);
+        float thickPointerY = mCentrePointY - shortPointerLength * (float) Math.cos(secondRadians + Math.PI);
+        canvas.drawLine(mCentrePointX, mCentrePointY, thickPointerX, thickPointerY, mPaint);
+        // 绘制圆心点
+        mPaint.setColor(Color.BLACK);
+        canvas.drawCircle(mCentrePointX, mCentrePointY, mHourMinutePointerStrokeWidth / 5, mPaint);
+        mPaint.setColor(mSecondPointerColor);
+        canvas.drawCircle(mCentrePointX, mCentrePointY, mHourMinutePointerStrokeWidth / 3, mPaint);
     }
 }
