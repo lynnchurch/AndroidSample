@@ -8,10 +8,7 @@ import android.graphics.Paint;
 import android.graphics.PaintFlagsDrawFilter;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.util.TypedValue;
 import android.view.View;
-import android.view.ViewGroup;
 
 import androidx.annotation.Nullable;
 
@@ -37,7 +34,6 @@ public class WatchView extends View {
     private float mScaleStrokeWidth; // 刻度的粗细
     private float mScaleLength; // 刻度的长度
     private int mScreenWidth; // 屏幕宽度
-    private int mScreenHeight; // 屏幕高度
     private float mPadding; // 内边距
     private int mBackground; // 表盘底色
     private float mSize; // 表盘的尺寸
@@ -60,7 +56,6 @@ public class WatchView extends View {
         int widthPixels = context.getResources().getDisplayMetrics().widthPixels;
         int heightPixels = context.getResources().getDisplayMetrics().heightPixels;
         mScreenWidth = Math.min(widthPixels, heightPixels);
-        mScreenHeight = Math.max(widthPixels, heightPixels);
         parseAttrs(context, attrs, defStyleAttr);
         initPaint();
     }
@@ -72,7 +67,7 @@ public class WatchView extends View {
         mSecondPointerColor = a.getColor(R.styleable.WatchView_second_pointer_color, Color.argb(222, 181, 140, 78));
         mTwelveColor = a.getColor(R.styleable.WatchView_twelve_color, Color.WHITE);
         mSixtyColor = a.getColor(R.styleable.WatchView_sixty_color, Color.WHITE);
-        mScaleColor = a.getColor(R.styleable.WatchView_scale_color, Color.argb(200, 255, 255, 255));
+        mScaleColor = a.getColor(R.styleable.WatchView_scale_color, Color.argb(188, 255, 255, 255));
         mPadding = a.getDimension(R.styleable.WatchView_android_padding, Utils.dip2px(context, 16));
         mBackground = a.getColor(R.styleable.WatchView_android_background, Color.BLACK);
         setBackgroundColor(mBackground);
@@ -104,8 +99,8 @@ public class WatchView extends View {
         mSize = w;
         mTwelveTextSize = (w - 2 * mPadding) / 8f;
         mSixtyTextSize = (w - 2 * mPadding) / 20f;
-        mScaleStrokeWidth = w / 125f;
-        mScaleLength = w / 25f;
+        mScaleStrokeWidth = w / 156f;
+        mScaleLength = w / 26f;
         mHourMinutePointerStrokeWidth = w / 28f;
         mCentrePointX = w / 2f;
         mCentrePointY = w / 2f;
@@ -113,7 +108,10 @@ public class WatchView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
+        // 绘制表盘
         drawDial(canvas);
+        // 绘制指针
+        drawPointer(canvas);
     }
 
     /**
@@ -130,9 +128,6 @@ public class WatchView extends View {
 
         // 绘制内圈数字
         drawInterNumber(canvas);
-
-        // 绘制指针
-        drawPointer(canvas);
     }
 
     /**
@@ -299,7 +294,7 @@ public class WatchView extends View {
         float secondAngle = second * 360 / 60f;
         double secondRadians = secondAngle / 360 * 2 * Math.PI;
         // 绘制长指针的一端
-        float longPointerLength = mSize / 2.6f;
+        float longPointerLength = mSize / 2.5f;
         float longPointerX = mCentrePointX + longPointerLength * (float) Math.sin(secondRadians);
         float longPointerY = mCentrePointY - longPointerLength * (float) Math.cos(secondRadians);
         canvas.drawLine(mCentrePointX, mCentrePointY, longPointerX, longPointerY, mPaint);
