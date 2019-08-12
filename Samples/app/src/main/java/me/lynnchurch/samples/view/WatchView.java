@@ -219,6 +219,8 @@ public class WatchView extends View {
         drawMinutePointer(canvas);
         // 绘制秒针
         drawSecondPointer(canvas);
+
+        postInvalidateDelayed(1000);
     }
 
     /**
