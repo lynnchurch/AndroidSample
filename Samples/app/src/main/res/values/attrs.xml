@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="WatchView">
+        <attr name="hour_pointer_color" format="color" />
+        <attr name="minute_pointer_color" format="color" />
+        <attr name="second_pointer_color" format="color" />
+        <attr name="twelve_color" format="color" />
+        <attr name="sixty_color" format="color" />
+        <attr name="scale_color" format="color" />
+        <attr name="android:padding" />
+        <attr name="android:background" />
+    </declare-styleable>
+</resources>

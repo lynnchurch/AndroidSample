@@ -35,6 +35,10 @@ public class ViewActivity extends BaseActivity {
                 startActivity(new Intent(ViewActivity.this, DragViewActivity.class));
                 return;
             }
+            if (mViewSamples[1].equals(itemText)) {
+                startActivity(new Intent(ViewActivity.this, WatchViewActivity.class));
+                return;
+            }
         });
         rvSamples.setAdapter(mStringArrayAdapter);
         rvSamples.addItemDecoration(new DividerItemDecoration(this, RecyclerView.VERTICAL));

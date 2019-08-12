@@ -21,5 +21,6 @@
     <string name="client_dead">客户端 %1$s 已挂</string>
     <string-array name="view_samples">
         <item>拖动View</item>
+        <item>WatchView</item>
     </string-array>
 </resources>
