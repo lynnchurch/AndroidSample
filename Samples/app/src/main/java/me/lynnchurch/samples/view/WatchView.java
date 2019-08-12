@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import androidx.annotation.Nullable;
 
 import java.text.DecimalFormat;
+import java.util.Calendar;
 
 import me.lynnchurch.samples.R;
 import me.lynnchurch.samples.utils.Utils;
@@ -26,6 +27,7 @@ public class WatchView extends View {
     private int mHourPointerColor; // 时针颜色
     private int mMinutePointerColor; // 分针颜色
     private int mSecondPointerColor; // 秒针颜色
+    private float mHourMinutePointerStrokeWidth; // 时针分针的粗细
     private int mTwelveColor; // 1 - 12 数字颜色
     private float mTwelveTextSize; // 1 - 12 数字文本大小
     private int mSixtyColor; // 05 - 60 数字颜色
@@ -39,8 +41,11 @@ public class WatchView extends View {
     private float mPadding; // 内边距
     private int mBackground; // 表盘底色
     private float mSize; // 表盘的尺寸
+    private float mCentrePointX; // 圆心点x坐标
+    private float mCentrePointY; // 圆心点y坐标
     private Paint mPaint; // 画笔
     private PaintFlagsDrawFilter mPaintFlagsDrawFilter; // 画笔过滤器
+    private Calendar mCalendar = Calendar.getInstance(); // 日期
 
     public WatchView(Context context) {
         this(context, null, 0);
@@ -97,10 +102,13 @@ public class WatchView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         mSize = w;
-        mTwelveTextSize = (w - 2 * mPadding) / 9;
-        mSixtyTextSize = (w - 2 * mPadding) / 20;
-        mScaleStrokeWidth = w / 125;
-        mScaleLength = w / 24;
+        mTwelveTextSize = (w - 2 * mPadding) / 9f;
+        mSixtyTextSize = (w - 2 * mPadding) / 20f;
+        mScaleStrokeWidth = w / 125f;
+        mScaleLength = w / 25f;
+        mHourMinutePointerStrokeWidth = w / 27f;
+        mCentrePointX = w / 2f;
+        mCentrePointY = w / 2f;
     }
 
     @Override
@@ -115,7 +123,26 @@ public class WatchView extends View {
      */
     private void drawDial(Canvas canvas) {
         // 绘制刻度
+        drawScale(canvas);
+
+        // 绘制外圈数字
+        drawOuterNumber(canvas);
+
+        // 绘制内圈数字
+        drawInterNumber(canvas);
+
+        // 绘制指针
+        drawPointer(canvas);
+    }
+
+    /**
+     * 绘制刻度
+     *
+     * @param canvas
+     */
+    private void drawScale(Canvas canvas) {
         mPaint.setStrokeWidth(mScaleStrokeWidth);
+        mPaint.setStrokeCap(Paint.Cap.ROUND);
         mPaint.setColor(mScaleColor);
         for (int i = 60; i >= 1; i--) {
             if (i % 5 != 0) {
@@ -123,17 +150,18 @@ public class WatchView extends View {
             }
             canvas.rotate(-6, mSize / 2, mSize / 2);
         }
+    }
 
-        // 圆点坐标
-        float x0 = mSize / 2;
-        float y0 = mSize / 2;
-
-        // 绘制外圈数字
+    /**
+     * 绘制外圈数字
+     *
+     * @param canvas
+     */
+    private void drawOuterNumber(Canvas canvas) {
         mPaint.setColor(mSixtyColor);
         mPaint.setTextSize(mSixtyTextSize);
-        String text = mSixtyFormat.format(1);
+        String numberText;
         Rect textBound = new Rect();
-        mPaint.getTextBounds(text, 0, text.length(), textBound);
         // 外圈半径
         float outerRadius = mSize / 2f - mPadding - mScaleLength / 2f;
         // 外圈绘制坐标
@@ -145,11 +173,82 @@ public class WatchView extends View {
             }
             // 将角度转换成弧度值
             double radians = i * 6f / 360 * 2 * Math.PI;
-            outerX = x0 + outerRadius * (float) Math.sin(radians) - textBound.width() / 2f;
-            outerY = y0 - outerRadius * (float) Math.cos(radians) + textBound.height() / 2f;
-            text = mSixtyFormat.format(i);
-            mPaint.getTextBounds(text, 0, text.length(), textBound);
-            canvas.drawText(text, outerX, outerY, mPaint);
+            // 测量文本区域
+            numberText = mSixtyFormat.format(i);
+            mPaint.getTextBounds(numberText, 0, numberText.length(), textBound);
+            // 文字是以左下角为起点进行绘制的，为了保证文字的中心点位于圆圈上所以得进行位移
+            outerX = mCentrePointX + outerRadius * (float) Math.sin(radians) - textBound.width() / 2f;
+            outerY = mCentrePointY - outerRadius * (float) Math.cos(radians) + textBound.height() / 2f;
+            canvas.drawText(numberText, outerX, outerY, mPaint);
         }
+    }
+
+    /**
+     * 绘制内圈数字
+     *
+     * @param canvas
+     */
+    private void drawInterNumber(Canvas canvas) {
+        mPaint.setColor(mTwelveColor);
+        mPaint.setTextSize(mTwelveTextSize);
+        String numberText;
+        Rect textBound = new Rect();
+        // 内圈半径
+        float interRadius = mSize / 2f - mPadding - 1.6f * mScaleLength - mTwelveTextSize / 2f;
+        // 内圈绘制坐标
+        float interX;
+        float interY;
+        for (int i = 1; i <= 12; i++) {
+            // 将角度转换成弧度值
+            double radians = i * 30f / 360 * 2 * Math.PI;
+            // 测量文本区域
+            numberText = String.valueOf(i);
+            mPaint.getTextBounds(numberText, 0, numberText.length(), textBound);
+            // 文字是以左下角为起点进行绘制的，为了保证文字的中心点位于圆圈上所以得进行位移
+            interX = mCentrePointX + interRadius * (float) Math.sin(radians) - textBound.width() / 2f;
+            interY = mCentrePointY - interRadius * (float) Math.cos(radians) + textBound.height() / 2f;
+            canvas.drawText(numberText, interX, interY, mPaint);
+        }
+    }
+
+    /**
+     * 绘制指针
+     *
+     * @param canvas
+     */
+    private void drawPointer(Canvas canvas) {
+        mCalendar.setTimeInMillis(System.currentTimeMillis());
+        // 绘制时针
+        drawHourPointer(canvas);
+    }
+
+    /**
+     * 绘制时针
+     *
+     * @param canvas
+     */
+    private void drawHourPointer(Canvas canvas) {
+        int hour = mCalendar.get(Calendar.HOUR);
+        int minute = mCalendar.get(Calendar.MINUTE);
+        int second = mCalendar.get(Calendar.SECOND);
+        mPaint.setColor(mHourPointerColor);
+        mPaint.setStrokeWidth(mHourMinutePointerStrokeWidth / 2.6f);
+        mPaint.setStrokeCap(Paint.Cap.ROUND);
+        // 时针转过的角度
+        float hourAngle = (hour + minute / 60f + second / 3600f) * 360 / 12f;
+        double hourRadians = hourAngle / 360 * 2 * Math.PI;
+        // 绘制指针细的一端
+        float thinPointerLength = mSize / 15f;
+        float thinPointerX = mCentrePointX + thinPointerLength * (float) Math.sin(hourRadians);
+        float thinPointerY = mCentrePointY - thinPointerLength * (float) Math.cos(hourRadians);
+        canvas.drawLine(mCentrePointX, mCentrePointY, thinPointerX, thinPointerY, mPaint);
+        // 绘制指针粗的一端
+        float thickPointerLength = mSize / 4.3f;
+        float thickPointerX = mCentrePointX + thickPointerLength * (float) Math.sin(hourRadians);
+        float thickPointerY = mCentrePointY - thickPointerLength * (float) Math.cos(hourRadians);
+        mPaint.setStrokeWidth(mHourMinutePointerStrokeWidth);
+        canvas.drawLine(thinPointerX, thinPointerY, thickPointerX, thickPointerY, mPaint);
+        // 绘制圆心点
+        canvas.drawCircle(mCentrePointX, mCentrePointY, mHourMinutePointerStrokeWidth / 2, mPaint);
     }
 }
