@@ -102,11 +102,11 @@ public class WatchView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         mSize = w;
-        mTwelveTextSize = (w - 2 * mPadding) / 9f;
+        mTwelveTextSize = (w - 2 * mPadding) / 8f;
         mSixtyTextSize = (w - 2 * mPadding) / 20f;
         mScaleStrokeWidth = w / 125f;
         mScaleLength = w / 25f;
-        mHourMinutePointerStrokeWidth = w / 27f;
+        mHourMinutePointerStrokeWidth = w / 28f;
         mCentrePointX = w / 2f;
         mCentrePointY = w / 2f;
     }
@@ -220,6 +220,8 @@ public class WatchView extends View {
         mCalendar.setTimeInMillis(System.currentTimeMillis());
         // 绘制时针
         drawHourPointer(canvas);
+        // 绘制分针
+        drawMinutePointer(canvas);
     }
 
     /**
@@ -246,6 +248,36 @@ public class WatchView extends View {
         float thickPointerLength = mSize / 4.3f;
         float thickPointerX = mCentrePointX + thickPointerLength * (float) Math.sin(hourRadians);
         float thickPointerY = mCentrePointY - thickPointerLength * (float) Math.cos(hourRadians);
+        mPaint.setStrokeWidth(mHourMinutePointerStrokeWidth);
+        canvas.drawLine(thinPointerX, thinPointerY, thickPointerX, thickPointerY, mPaint);
+        // 绘制圆心点
+        canvas.drawCircle(mCentrePointX, mCentrePointY, mHourMinutePointerStrokeWidth / 2, mPaint);
+    }
+
+    /**
+     * 绘制分针
+     *
+     * @param canvas
+     */
+    private void drawMinutePointer(Canvas canvas) {
+        int hour = mCalendar.get(Calendar.HOUR);
+        int minute = mCalendar.get(Calendar.MINUTE);
+        int second = mCalendar.get(Calendar.SECOND);
+        mPaint.setColor(mMinutePointerColor);
+        mPaint.setStrokeWidth(mHourMinutePointerStrokeWidth / 2.6f);
+        mPaint.setStrokeCap(Paint.Cap.ROUND);
+        // 分针转过的角度
+        float minuteAngle = (minute + second / 60f) * 360 / 60f;
+        double minuteRadians = minuteAngle / 360 * 2 * Math.PI;
+        // 绘制指针细的一端
+        float thinPointerLength = mSize / 15f;
+        float thinPointerX = mCentrePointX + thinPointerLength * (float) Math.sin(minuteRadians);
+        float thinPointerY = mCentrePointY - thinPointerLength * (float) Math.cos(minuteRadians);
+        canvas.drawLine(mCentrePointX, mCentrePointY, thinPointerX, thinPointerY, mPaint);
+        // 绘制指针粗的一端
+        float thickPointerLength = mSize / 2.85f;
+        float thickPointerX = mCentrePointX + thickPointerLength * (float) Math.sin(minuteRadians);
+        float thickPointerY = mCentrePointY - thickPointerLength * (float) Math.cos(minuteRadians);
         mPaint.setStrokeWidth(mHourMinutePointerStrokeWidth);
         canvas.drawLine(thinPointerX, thinPointerY, thickPointerX, thickPointerY, mPaint);
         // 绘制圆心点
