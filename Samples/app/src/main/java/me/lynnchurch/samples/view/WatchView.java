@@ -67,7 +67,7 @@ public class WatchView extends View {
         mSecondPointerColor = a.getColor(R.styleable.WatchView_second_pointer_color, Color.argb(222, 181, 140, 78));
         mTwelveColor = a.getColor(R.styleable.WatchView_twelve_color, Color.WHITE);
         mSixtyColor = a.getColor(R.styleable.WatchView_sixty_color, Color.WHITE);
-        mScaleColor = a.getColor(R.styleable.WatchView_scale_color, Color.argb(188, 255, 255, 255));
+        mScaleColor = a.getColor(R.styleable.WatchView_scale_color, Color.argb(122, 255, 255, 255));
         mPadding = a.getDimension(R.styleable.WatchView_android_padding, Utils.dip2px(context, 16));
         mBackground = a.getColor(R.styleable.WatchView_android_background, Color.BLACK);
         setBackgroundColor(mBackground);
@@ -101,13 +101,14 @@ public class WatchView extends View {
         mSixtyTextSize = (w - 2 * mPadding) / 20f;
         mScaleStrokeWidth = w / 156f;
         mScaleLength = w / 26f;
-        mHourMinutePointerStrokeWidth = w / 28f;
+        mHourMinutePointerStrokeWidth = w / 30f;
         mCentrePointX = w / 2f;
         mCentrePointY = w / 2f;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
+        canvas.setDrawFilter(mPaintFlagsDrawFilter);
         // 绘制表盘
         drawDial(canvas);
         // 绘制指针
@@ -220,6 +221,7 @@ public class WatchView extends View {
         // 绘制秒针
         drawSecondPointer(canvas);
 
+        // 每隔1秒刷新一次
         postInvalidateDelayed(1000);
     }
 
@@ -244,7 +246,7 @@ public class WatchView extends View {
         float thinPointerY = mCentrePointY - thinPointerLength * (float) Math.cos(hourRadians);
         canvas.drawLine(mCentrePointX, mCentrePointY, thinPointerX, thinPointerY, mPaint);
         // 绘制指针粗的一端
-        float thickPointerLength = mSize / 4.3f;
+        float thickPointerLength = mSize / 5f;
         float thickPointerX = mCentrePointX + thickPointerLength * (float) Math.sin(hourRadians);
         float thickPointerY = mCentrePointY - thickPointerLength * (float) Math.cos(hourRadians);
         mPaint.setStrokeWidth(mHourMinutePointerStrokeWidth);
